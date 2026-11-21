@@ -103,19 +103,43 @@
         badge.textContent = labels[best] || best.replace("x", " × ");
       }
     };
-    const up = () => {
-      document.removeEventListener("pointermove", move);
-      document.removeEventListener("pointerup", up);
+    // End on release, interruption, window blur or a missed release (no
+    // button held any more); Esc cancels back to the starting size.
+    let finished = false;
+    const finish = (cancel) => {
+      if (finished) return;
+      finished = true;
+      document.removeEventListener("pointermove", guardedMove);
+      document.removeEventListener("pointerup", onUp);
+      document.removeEventListener("pointercancel", onCancel);
+      document.removeEventListener("keydown", onKey, true);
+      window.removeEventListener("blur", onUp);
       document.documentElement.style.cursor = "";
       w.classList.remove("jdp-resizing");
       badge.remove();
-        if (w.dataset.size !== start) {
+      if (cancel) setSize(w, start);
+      else if (w.dataset.size !== start) {
         save();
         rerenderEditing();
       }
     };
-    document.addEventListener("pointermove", move);
-    document.addEventListener("pointerup", up);
+    const onUp = () => finish(false);
+    const onCancel = () => finish(true);
+    const onKey = (ev) => {
+      if (ev.key === "Escape") {
+        ev.stopPropagation();
+        finish(true);
+      }
+    };
+    const guardedMove = (ev) => (ev.buttons & 1 ? move(ev) : finish(false));
+    document.addEventListener("pointermove", guardedMove);
+    document.addEventListener("pointerup", onUp);
+    document.addEventListener("pointercancel", onCancel);
+    document.addEventListener("keydown", onKey, true);
+    window.addEventListener("blur", onUp);
+    try {
+      e.target.setPointerCapture(e.pointerId);
+    } catch (err) {}
   }
 
   // ---- Edit mode -------------------------------------------------------
@@ -137,6 +161,7 @@
       w.appendChild(x);
     }
     const can = axes(w);
+    if (gridColumns() < 3) can.h = false; // narrow window: one column only
     for (const axis of ["h", "v"]) {
       if (!can[axis] || $(`.jdp-w-handle.jdp-${axis}`, w)) continue;
       const h = document.createElement("span");
@@ -470,8 +495,17 @@
   // For automated checks: the packing simulation must match the real grid.
   window.jdpHome = { pack, gridColumns };
 
+  function onTimelineKey(e) {
+    const ev = e.target.closest?.(".jdp-tl-linked");
+    if (ev && (e.key === "Enter" || e.key === " ") && e.target === ev) {
+      e.preventDefault();
+      ev.click();
+    }
+  }
+
   function init() {
     if (!grid()) return;
+    document.addEventListener("keydown", onTimelineKey);
     tidyTimeline();
     tidyListEnds();
     window.addEventListener("resize", tidyListEnds);
@@ -491,6 +525,7 @@
     let resume = false;
     try {
       resume = sessionStorage.getItem("jdp-editing") === "1";
+      sessionStorage.removeItem("jdp-editing"); // one-shot: never sticks
     } catch (e) {}
     if (resume) {
       editing = true;

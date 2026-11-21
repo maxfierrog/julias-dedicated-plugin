@@ -61,7 +61,9 @@ def test_state_payload():
     st = session.state(s, (5, 0, 10), pace, cfg, now=1000 + 60)
     assert st["done"] == 1 and st["remaining"] == 15
     assert 0 < st["progress"] < 1
-    assert st["eta"] == "3 min"  # (5*2 + 10) answers * 10 s
+    assert st["eta"] == "about 3 min left"  # (5*2 + 10) answers * 10 s
+    quick = session.state(s, (0, 0, 2), pace, cfg, now=1000 + 60)
+    assert quick["eta"] == "less than a minute left"
     assert st["fatigue"] is False  # module off by default
 
 

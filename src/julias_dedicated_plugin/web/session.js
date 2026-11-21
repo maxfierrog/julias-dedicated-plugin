@@ -52,7 +52,7 @@
         parts.push([b(String(s.done)), ` of ${total} done`]);
       }
       if (s.show_eta && s.eta) {
-        parts.push(["about ", b(s.eta), " left"]);
+        parts.push([b(s.eta)]);
         parts.push([`done by ${s.finish}`]);
       }
       cap.replaceChildren(

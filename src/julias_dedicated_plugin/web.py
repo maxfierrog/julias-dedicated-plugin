@@ -231,5 +231,11 @@ def rerender() -> None:
         mw.deckBrowser.refresh()
     elif mw.state == "overview":
         mw.overview.refresh()
-    mw.toolbar.draw()
+    if mw.state != "review":  # redrawing would un-hide it in focus mode
+        mw.toolbar.draw()
     refresh_live()
+    if mw.state == "review":
+        from . import _hide_top_bar_for_review, _push_session
+
+        _hide_top_bar_for_review()
+        _push_session()  # e.g. the session module was just switched on

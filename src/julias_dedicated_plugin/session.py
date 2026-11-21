@@ -68,7 +68,15 @@ def state(
         "done": done,
         "remaining": remaining,
         "progress": done / (done + remaining) if done + remaining else 1.0,
-        "eta": stats.format_minutes(eta) if remaining else "",
+        "eta": (
+            (
+                "less than a minute left"
+                if eta < 60
+                else f"about {stats.format_minutes(eta)} left"
+            )
+            if remaining
+            else ""
+        ),
         "finish": _clock(finish) if remaining else "",
         "minutes": round((now - session.started) / 60),
         "fatigue": settings["modules"]["fatigue"] and fatigue(session, now),

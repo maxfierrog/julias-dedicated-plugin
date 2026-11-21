@@ -31,7 +31,7 @@ html.jdp-cards.jdp-surface-sheet #qa {
   padding: calc(36px * var(--jdp-space)) calc(40px * var(--jdp-space));
 }
 html.jdp-cards #qa.jdp-left {
-  text-align: left;
+  text-align: start;
 }
 html.jdp-cards #qa.jdp-left img,
 html.jdp-cards #qa.jdp-left table {
@@ -102,7 +102,7 @@ html.night-mode.jdp-dark-images-invert #qa img {
 }
 
 /* Tables */
-html.jdp-cards #qa table {
+html.jdp-cards #qa table:not(table table) {
   border-collapse: separate !important;
   border-spacing: 0;
   margin: 0.8em auto;
@@ -112,24 +112,25 @@ html.jdp-cards #qa table {
   border: 1px solid var(--jdp-border) !important;
   border-radius: var(--jdp-radius-sm);
   overflow: hidden;
-  text-align: left;
+  text-align: start;
 }
-html.jdp-cards #qa td,
-html.jdp-cards #qa th {
+/* Cell styling only for top-level tables (layout tables nested inside keep
+   their own look). */
+html.jdp-cards #qa table:not(table table) > * > tr > td,
+html.jdp-cards #qa table:not(table table) > * > tr > th {
   border: none !important;
-  padding: 0.45em 0.85em !important;
+  padding: 0.45em 0.85em;
 }
-html.jdp-cards #qa tr + tr > td,
-html.jdp-cards #qa tr + tr > th {
+html.jdp-cards #qa table:not(table table) > * > tr + tr > td,
+html.jdp-cards #qa table:not(table table) > * > tr + tr > th {
   border-top: 1px solid var(--jdp-border-subtle) !important;
 }
-html.jdp-cards #qa td + td,
-html.jdp-cards #qa th + th,
-html.jdp-cards #qa th + td {
+html.jdp-cards #qa table:not(table table) > * > tr > td + td,
+html.jdp-cards #qa table:not(table table) > * > tr > th + th,
+html.jdp-cards #qa table:not(table table) > * > tr > th + td {
   border-left: 1px solid var(--jdp-border-subtle) !important;
 }
-html.jdp-cards #qa th,
-html.jdp-cards #qa tr:first-child > td:has(b:only-child) {
+html.jdp-cards #qa table:not(table table) > * > tr > th {
   background: var(--jdp-inset);
   font-weight: 650;
 }
@@ -153,11 +154,11 @@ html.jdp-cards #qa div.hint {
   border-radius: var(--jdp-radius-sm);
   background: var(--jdp-inset);
   font-size: 0.78em;
-  text-align: left;
+  text-align: start;
 }
 
 /* Type-in-the-answer */
-html.jdp-cards #qa #typeans {
+html.jdp-cards #qa input#typeans {
   box-sizing: border-box;
   width: 100%;
   font: inherit;
@@ -168,6 +169,6 @@ html.jdp-cards #qa #typeans {
   color: var(--jdp-fg);
   outline: none;
 }
-html.jdp-cards #qa #typeans:focus {
+html.jdp-cards #qa input#typeans:focus {
   border-color: var(--jdp-accent);
 }

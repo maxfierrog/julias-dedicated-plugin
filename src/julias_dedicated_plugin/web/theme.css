@@ -361,6 +361,10 @@ html.jdp-theme.jdp-ctx-deckbrowser a.deck {
   font-weight: 700;
   text-decoration: none;
 }
+html.jdp-theme.jdp-ctx-deckbrowser a.deck.filtered {
+  color: var(--jdp-accent) !important;
+  font-style: italic;
+}
 html.jdp-theme.jdp-ctx-deckbrowser tr.current a.deck {
   color: var(--jdp-accent) !important;
 }

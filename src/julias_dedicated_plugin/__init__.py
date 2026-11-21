@@ -77,22 +77,28 @@ def _on_deck_options_menu(menu, did: int) -> None:
     if not web.settings()["modules"]["theme"]:
         return
 
+    def select():
+        # Both dialogs act on the current deck; make the list reflect it.
+        mw.col.decks.select(did)
+        mw.deckBrowser.refresh()
+
     def custom_study():
         import aqt.customstudy
 
-        mw.col.decks.select(did)
+        select()
         aqt.customstudy.CustomStudy.fetch_data_and_show(mw)
 
     def description():
         from aqt.deckdescription import DeckDescriptionDialog
 
-        mw.col.decks.select(did)
+        select()
         DeckDescriptionDialog(mw)
 
+    if mw.col.decks.get(did)["dyn"]:
+        return  # Anki offers neither for filtered decks
     menu.addSeparator()
     menu.addAction("Custom study…").triggered.connect(custom_study)
-    if not mw.col.decks.get(did)["dyn"]:
-        menu.addAction("Description…").triggered.connect(description)
+    menu.addAction("Description…").triggered.connect(description)
 
 
 # --- Session display ------------------------------------------------------
@@ -138,6 +144,14 @@ def _on_show_question(card) -> None:
     _push_session()
 
 
+@_guard
+def _on_undo(changes) -> None:
+    # An undone answer shouldn't keep counting toward the session.
+    if mw.state == "review" and _session is not None and _session.answers:
+        _session.answers.pop()
+        _push_session()
+
+
 # --- Focus mode -------------------------------------------------------------
 
 
@@ -145,14 +159,46 @@ def _on_show_question(card) -> None:
 def apply_focus_mode() -> None:
     """Focus mode keeps the top bar hidden for the whole review session.
 
-    We deliberately don't use Anki's own auto-hide: it re-shows the bar
-    whenever the mouse leaves the card (e.g. moving to the answer buttons),
-    which feels random. Anki's preference is switched off and we hide the
-    bar ourselves on entering review; Anki shows it again on leaving."""
-    if web.settings()["session"]["focus_mode"]:
-        mw.pm.set_hide_top_bar(False)
+    Anki's own auto-hide re-shows the bar whenever the mouse leaves the card
+    (e.g. on the way to the answer buttons), which feels random. Instead of
+    changing Anki's preference (hers to keep), we refuse "show" while in
+    review with focus mode on, except while leaving review."""
+    _install_focus_guard()
     if mw.state == "review":
         _hide_top_bar_for_review()
+
+
+_leaving_review = False
+
+
+def _focus_on() -> bool:
+    return mw.state == "review" and web.settings()["session"]["focus_mode"]
+
+
+def _install_focus_guard() -> None:
+    bar = mw.toolbarWeb
+    if getattr(bar, "_jdp_focus_guard", False):
+        return
+    bar._jdp_focus_guard = True
+    show = bar.show
+
+    def guarded_show():
+        if _focus_on() and not _leaving_review:
+            return
+        show()
+
+    bar.show = guarded_show
+    cleanup = mw._reviewCleanup
+
+    def review_cleanup(new_state):
+        global _leaving_review
+        _leaving_review = True  # Anki re-shows the bar here: allow it
+        try:
+            cleanup(new_state)
+        finally:
+            _leaving_review = False
+
+    mw._reviewCleanup = review_cleanup
 
 
 def _hide_top_bar_for_review() -> None:
@@ -428,6 +474,7 @@ gui_hooks.deck_browser_will_show_options_menu.append(_on_deck_options_menu)
 gui_hooks.state_did_change.append(_on_state_change)
 gui_hooks.reviewer_did_answer_card.append(_on_answer)
 gui_hooks.reviewer_did_show_question.append(_on_show_question)
+gui_hooks.state_did_undo.append(_on_undo)
 gui_hooks.collection_did_load.append(_on_collection_loaded)
 
 
