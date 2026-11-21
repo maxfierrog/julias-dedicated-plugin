@@ -44,7 +44,8 @@ uv run pytest
 ```
 src/julias_dedicated_plugin/   the add-on itself (what ships in the .ankiaddon)
   manifest.json        package/folder name, display name, min Anki version
-  config.json          default user config (editable in Anki's add-on dialog)
+  config.json          unused placeholder; settings live in the collection
+                       (Tools > Add-ons > Config opens the Customize window)
 src/devtools/          dev scripts (not shipped)
 tests/                 pytest suite
 .anki-dev/             isolated Anki base folder for development (gitignored)

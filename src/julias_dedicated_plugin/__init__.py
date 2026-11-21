@@ -315,6 +315,11 @@ def _on_main_window_init() -> None:
 
     add_menu_action()
     zoom.install()
+    # Tools > Add-ons > Config opens our Customize window (settings live in
+    # the collection, not in Anki's per-add-on JSON config).
+    from .settings_dialog import open_settings
+
+    mw.addonManager.setConfigAction(__name__, open_settings)
     mw.app.installEventFilter(_watcher)
     log.info("Julia's Dedicated Plugin %s loaded", __version__)
 

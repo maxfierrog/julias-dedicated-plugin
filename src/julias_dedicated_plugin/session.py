@@ -69,10 +69,16 @@ def state(
         "remaining": remaining,
         "progress": done / (done + remaining) if done + remaining else 1.0,
         "eta": stats.format_minutes(eta) if remaining else "",
-        "finish": time.strftime("%-I:%M %p", finish) if remaining else "",
+        "finish": _clock(finish) if remaining else "",
         "minutes": round((now - session.started) / 60),
         "fatigue": settings["modules"]["fatigue"] and fatigue(session, now),
     }
+
+
+def _clock(t: time.struct_time) -> str:
+    """'4:37 PM' without platform-specific strftime flags (Windows lacks them)."""
+    hour = t.tm_hour % 12 or 12
+    return f"{hour}:{t.tm_min:02d} {'AM' if t.tm_hour < 12 else 'PM'}"
 
 
 def js_update(payload: dict) -> str:

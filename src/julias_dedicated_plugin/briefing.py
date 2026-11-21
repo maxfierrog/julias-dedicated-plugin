@@ -176,7 +176,7 @@ def _w_forecast(col, settings, cols=1, rows=1) -> str:
         label = (
             "today"
             if i == 0
-            else day.strftime("%a" if len(days) <= 7 else "%-d")
+            else (day.strftime("%a") if len(days) <= 7 else str(day.day))
         )
         h = max(8, round(60 * n / peak)) if n else 6
         bars.append(
@@ -245,7 +245,7 @@ def _w_heatmap(col, settings, cols=1, rows=1) -> str:
         )
         today_cls = " jdp-now" if i == len(counts) - 1 else ""
         cells.append(
-            f"<i class='l{level}{today_cls}' title='{day:%a %b %-d}: {c} cards'></i>"
+            f"<i class='l{level}{today_cls}' title='{day:%a %b} {day.day}: {c} cards'></i>"
         )
     return _tile(
         "accent",
@@ -327,7 +327,12 @@ def _w_finish_line(col, settings, cols=1, rows=1) -> str:
             when = "<span class='jdp-muted'>paused</span>"
         else:
             date = dt.date.today() + dt.timedelta(days=f.days_left)
-            when = f"<b>{date.strftime('%b %-d' if f.days_left < 300 else '%b %Y')}</b>"
+            label = (
+                f"{date:%b} {date.day}"
+                if f.days_left < 300
+                else f"{date:%b %Y}"
+            )
+            when = f"<b>{label}</b>"
         items.append(
             "<div class='jdp-meter jdp-finish'>"
             f"<span class='jdp-meter-name'>{_short_deck(f.name)}</span>"
@@ -475,7 +480,7 @@ def _w_timeline(col, settings, cols=3, rows=1) -> str:
             f"<span class='jdp-tl-count'>{short}</span><i class='jdp-tl-dot'></i>"
             "<div class='jdp-tl-pop' role='tooltip'>"
             f"<b>{html.escape(title)}</b>"
-            f"<span>{date.strftime('%a, %b %-d')} · {countdown(days)}</span>"
+            f"<span>{date:%a, %b} {date.day} · {countdown(days)}</span>"
             f"{deck_html}"
             f"<button type='button' class='jdp-tl-del' title='Remove event' "
             f"onclick=\"event.stopPropagation();pycmd('jdp:event-del:{i}')\">"

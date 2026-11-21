@@ -63,3 +63,20 @@ def test_state_payload():
     assert 0 < st["progress"] < 1
     assert st["eta"] == "3 min"  # (5*2 + 10) answers * 10 s
     assert st["fatigue"] is False  # module off by default
+
+
+def test_clock_format_is_portable():
+    import time as t
+
+    assert (
+        session._clock(t.struct_time((2026, 1, 1, 0, 5, 0, 0, 1, 0)))
+        == "12:05 AM"
+    )
+    assert (
+        session._clock(t.struct_time((2026, 1, 1, 16, 37, 0, 0, 1, 0)))
+        == "4:37 PM"
+    )
+    assert (
+        session._clock(t.struct_time((2026, 1, 1, 12, 0, 0, 0, 1, 0)))
+        == "12:00 PM"
+    )
