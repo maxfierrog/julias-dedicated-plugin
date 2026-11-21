@@ -80,6 +80,15 @@ html.jdp button.jdp-link {
   border-color: transparent !important;
   box-shadow: none !important;
 }
+html.jdp button.jdp-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+html.jdp button.jdp-link .jdp-ico {
+  width: 15px;
+  height: 15px;
+}
 html.jdp button.jdp-link:hover {
   color: var(--jdp-accent) !important;
   background: color-mix(in srgb, var(--jdp-accent) 10%, transparent) !important;

@@ -9,7 +9,7 @@ process: keep it to hook registration and do real work in the hooks.
 import os
 
 from aqt import gui_hooks, mw
-from aqt.qt import QEvent, QObject, Qt, QTimer, QWidget
+from aqt.qt import QEvent, QMenu, QObject, Qt, QTimer, QWidget
 
 from . import briefing, session, stats, web
 from .version import __version__
@@ -151,6 +151,11 @@ def _on_js_message(handled, message: str, context):
             handle(cmd, arg)
         elif cmd == "dev-grab" and os.environ.get("ANKIDEV"):
             _dev_grab(arg)
+        elif cmd == "dev-close-popup" and os.environ.get("ANKIDEV"):
+            from aqt.qt import QApplication
+
+            if popup := QApplication.activePopupWidget():
+                popup.close()
         elif cmd == "decks":
             mw.moveToState("deckBrowser")
         elif cmd == "fatigue-dismiss" and _session is not None:
@@ -176,9 +181,16 @@ def _dev_grab(folder: str) -> None:
 
 
 class _WindowWatcher(QObject):
-    """Styles each top-level window's title bar as it is first shown."""
+    """Styles each top-level window's title bar as it is first shown, and
+    lets popups (menus, tooltips) have truly rounded corners."""
 
     def eventFilter(self, obj, event):
+        if event.type() == QEvent.Type.Polish and _is_rounded_popup(obj):
+            # Without a transparent window behind it, a rounded menu shows
+            # the native window's square corners. Must be set before showing.
+            obj.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
+            obj.setWindowFlag(Qt.WindowType.FramelessWindowHint, True)
+            obj.setWindowFlag(Qt.WindowType.NoDropShadowWindowHint, True)
         if (
             event.type() == QEvent.Type.Show
             and isinstance(obj, QWidget)
@@ -188,6 +200,10 @@ class _WindowWatcher(QObject):
             # After the native window exists and Qt has set its look.
             QTimer.singleShot(0, lambda w=obj: web.style_window(w))
         return False
+
+
+def _is_rounded_popup(obj) -> bool:
+    return isinstance(obj, QMenu) or type(obj).__name__ == "QTipLabel"
 
 
 _watcher = _WindowWatcher()

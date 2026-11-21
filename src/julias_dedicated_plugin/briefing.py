@@ -237,11 +237,28 @@ def home_html(col, settings: dict, now: dt.datetime | None = None) -> str:
     )
 
 
-def _link(cmd: str, label: str, key: str = "") -> str:
+_ACTION_ICONS = {
+    "plus": "<path d='M12 5v14M5 12h14'/>",
+    "import": "<path d='M12 4v10M8 10l4 4 4-4'/>"
+    "<path d='M4 15v2a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-2'/>",
+    "globe": "<circle cx='12' cy='12' r='8.5'/>"
+    "<path d='M3.5 12h17M12 3.5c2.4 2.4 3.6 5.2 3.6 8.5S14.4 18.1 12 20.5"
+    "C9.6 18.1 8.4 15.3 8.4 12S9.6 5.9 12 3.5z'/>",
+}
+
+
+def _link(cmd: str, label: str, key: str = "", icon: str = "") -> str:
     title = f" title='Shortcut: {key}'" if key else ""
+    svg = (
+        "<svg class='jdp-ico' viewBox='0 0 24 24' fill='none' "
+        "stroke='currentColor' stroke-width='2' stroke-linecap='round' "
+        f"stroke-linejoin='round' aria-hidden='true'>{_ACTION_ICONS[icon]}</svg>"
+        if icon
+        else ""
+    )
     return (
         f"<button class='jdp-link'{title} "
-        f"onclick=\"pycmd('{cmd}');return false;\">{label}</button>"
+        f"onclick=\"pycmd('{cmd}');return false;\">{svg}{label}</button>"
     )
 
 
@@ -260,9 +277,9 @@ def deck_actions() -> str:
     """The deck screen's own actions (formerly a separate bottom bar)."""
     return (
         "<div class='jdp-deck-actions'>"
-        + _link("create", "+ New deck")
-        + _link("import", "Import a file")
-        + _link("shared", "Find shared decks")
+        + _link("create", "New deck", icon="plus")
+        + _link("import", "Import a file", icon="import")
+        + _link("shared", "Find shared decks", icon="globe")
         + "</div>"
     )
 

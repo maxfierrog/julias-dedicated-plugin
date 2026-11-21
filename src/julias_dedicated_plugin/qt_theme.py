@@ -187,6 +187,9 @@ QMenu {{
 QMenu::item {{
     padding: 4px 18px 4px 10px;
     border-radius: {r}px;
+    /* Anki uses margin-bottom only, which leaves extra space under the
+       last item; split it so top and bottom edges match. */
+    margin: 2px 0;
 }}
 QMenu::item:selected {{
     background: {soft};
