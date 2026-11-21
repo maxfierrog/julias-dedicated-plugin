@@ -9,13 +9,13 @@ theme = load_addon_module("theme")
 def test_merged_fills_defaults_and_drops_bad_values():
     stored = {
         "name": "J",
-        "theme": {"preset": "sage", "radius": "big"},  # bad type ignored
+        "theme": {"preset": "matcha", "radius": "big"},  # bad type ignored
         "modules": {"fatigue": 1},  # int is not a bool
         "unknown": 5,
     }
     m = settings.merged(stored)
     assert m["name"] == "J"
-    assert m["theme"]["preset"] == "sage"
+    assert m["theme"]["preset"] == "matcha"
     assert m["theme"]["radius"] == settings.DEFAULTS["theme"]["radius"]
     assert m["modules"]["fatigue"] is False
     assert "unknown" not in m
@@ -35,10 +35,8 @@ def test_settings_roundtrip_in_collection(tmp_path):
         assert again["cards"]["size"] == 26
         assert again["modules"]["fatigue"] is True
         # Only her changes are stored, so new defaults still reach her.
-        assert col.get_config(settings.CONFIG_KEY) == {
-            "cards": {"size": 26},
-            "modules": {"fatigue": True},
-        }
+        assert col.get_config("jdp.cards") == {"size": 26}
+        assert col.get_config("jdp.modules") == {"fatigue": True}
         assert store.reset() == settings.DEFAULTS
     finally:
         col.close()

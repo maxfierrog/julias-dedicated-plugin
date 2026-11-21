@@ -4,11 +4,12 @@ main window behind it."""
 import json
 
 from aqt import mw
-from aqt.qt import QAction, QDialog, QKeySequence, QVBoxLayout
+from aqt.qt import QAction, QDialog, QKeySequence, Qt, QVBoxLayout
 from aqt.theme import Theme
 from aqt.webview import AnkiWebView
 
 from . import theme, web
+from .briefing import script_json
 from .settings import Settings
 from .version import __version__
 
@@ -22,7 +23,10 @@ _RERENDER_PREFIXES = ("modules.", "briefing.", "name")
 _dialog: "SettingsDialog | None" = None
 
 
-class _Context:
+class SettingsContext:
+    """Bridge context of the Customize window: commands that change settings
+    are only accepted from here (see __init__._allowed)."""
+
     jdp_context = "settings"
 
 
@@ -48,18 +52,23 @@ class SettingsDialog(QDialog):
 
     def __init__(self) -> None:
         super().__init__(mw)
+        # Really free the window (and its web view) when closed.
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.setWindowTitle("Customize")
         self.resize(480, 780)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         self.web = AnkiWebView(parent=self, title="jdp settings")
+        self._ctx = SettingsContext()
+        # Messages from this page carry our context (checked on receipt).
+        self.web.set_bridge_command(lambda _cmd: None, self._ctx)
         layout.addWidget(self.web)
         self.web.stdHtml(
             "<div id='app'></div><script>window.JDP_DATA = "
-            f"{json.dumps(_page_data())};</script>",
+            f"{script_json(_page_data())};</script>",
             css=[web.url("settings.css")],
             js=[web.url("settings.js")],
-            context=_Context(),
+            context=self._ctx,
         )
         # Sit beside the main window so changes are visible as they happen.
         geo = mw.frameGeometry()
@@ -75,6 +84,18 @@ class SettingsDialog(QDialog):
         self.web.eval(
             f"window.jdpSettings && jdpSettings.load({json.dumps(_page_data())});"
         )
+
+
+def close_settings() -> None:
+    """Profile closing: never let the window write into another profile."""
+    if _dialog is not None:
+        _dialog.close()
+
+
+def reload_settings() -> None:
+    """After a sync, show the (possibly changed) synced settings."""
+    if _dialog is not None and mw.col is not None:
+        _dialog.push()
 
 
 def open_settings() -> None:
@@ -93,9 +114,11 @@ def handle(cmd: str, arg: str) -> None:
     from . import apply_focus_mode
 
     if cmd == "set":
-        path, value = json.loads(arg)
+        from . import _strict_json
+
+        path, value = _strict_json(arg)
         if path == "anki.mode":
-            mw.set_theme(Theme(int(value)))
+            mw.set_theme(Theme(max(0, min(2, int(value)))))
         else:
             Settings(mw.col).set(path, value)
         if path == "session.focus_mode":

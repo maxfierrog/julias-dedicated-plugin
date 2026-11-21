@@ -15,6 +15,7 @@ from aqt import mw
 from aqt.webview import WebContent
 
 from . import theme
+from .briefing import script_json
 from .settings import Settings, merged
 
 WEB_EXPORTS = r"web/.*\.(css|js|woff2|svg|html|png)$"
@@ -66,12 +67,14 @@ window.jdpApply = function (css, classes) {{
   }}
   tag.textContent = css;
   const root = document.documentElement;
-  [...root.classList].filter(c => c.startsWith("jdp")).forEach(
-    c => root.classList.remove(c));
+  // Replace our setting-driven classes; keep page state like edit mode.
+  const keep = ["jdp-editing", "jdp-reordering"];
+  [...root.classList].filter(c => c.startsWith("jdp") && !keep.includes(c))
+    .forEach(c => root.classList.remove(c));
   root.classList.add(...classes, "jdp-ctx-{ctx}");
   document.dispatchEvent(new CustomEvent("jdp:settings"));
 }};
-jdpApply({json.dumps(tokens)}, {json.dumps(classes)});
+jdpApply({script_json(tokens)}, {script_json(classes)});
 </script>"""
 
 
@@ -102,10 +105,12 @@ _FUNCTIONAL_FONT = (
 
 
 def on_webview_did_inject_style(webview) -> None:
-    """Newer page-based screens (deck options, stats, editor...)."""
+    """Newer page-based screens (deck options, stats, editor...). Anki also
+    fires this for the main view after it once showed the congrats page, so
+    leave our fully redesigned screens (which define jdpApply) alone."""
     s = settings()
     if s["modules"]["theme"] and mw.col is not None:
-        webview.eval(_tokens_only_js(s))
+        webview.eval(f"if (!window.jdpApply) {{ {_tokens_only_js(s)} }}")
 
 
 def on_webview_will_set_content(web_content: WebContent, context) -> None:
@@ -195,7 +200,11 @@ def refresh_live() -> None:
     # Every open web view: redesigned screens re-apply fully, functional
     # screens (editor, options, stats...) just get the palette.
     for w in QApplication.allWidgets():
-        if isinstance(w, AnkiWebView):
+        if (
+            isinstance(w, AnkiWebView)
+            and w.isVisible()
+            and w.page() is not None
+        ):
             w.eval(f"if (window.jdpApply) {{ {main} }} else {{ {tokens} }}")
     try:
         qt_theme.apply(settings())  # re-styles native windows, then title bars

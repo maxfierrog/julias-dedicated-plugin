@@ -85,3 +85,12 @@ def test_timeline_event_links_to_its_deck(seeded_col):
     assert f"jdp:study:{mcat}" in out
     assert out.count("jdp-tl-linked") == 1  # only the event with a deck
     assert "<select name='deck'" in out
+
+
+def test_script_json_cannot_break_out_of_script_tags():
+    import json
+
+    payload = {"name": "x</script><script>alert(1)</script>&"}
+    out = briefing.script_json(payload)
+    assert "</script>" not in out and "<" not in out and "&" not in out
+    assert json.loads(out) == payload  # still the same data once parsed

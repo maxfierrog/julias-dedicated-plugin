@@ -7,6 +7,17 @@ import html
 
 from . import stats
 
+
+def script_json(obj) -> str:
+    """JSON that is safe inside a <script> element (no "</script>" breakout)."""
+    return (
+        json.dumps(obj)
+        .replace("<", "\\u003c")
+        .replace(">", "\\u003e")
+        .replace("&", "\\u0026")
+    )
+
+
 WEEKS = 36
 GEAR = (
     "<svg viewBox='0 0 24 24' width='18' height='18' fill='none' "
@@ -423,7 +434,8 @@ def _w_timeline(col, settings, cols=3, rows=1) -> str:
         "<form class='jdp-tl-form' hidden>"
         "<input type='text' name='title' placeholder='Event, e.g. Biochem midterm' "
         "maxlength='60' required>"
-        f"<input type='date' name='date' min='{today.isoformat()}' required>"
+        f"<input type='date' name='date' min='{today.isoformat()}' "
+        f"max='{today.year + 10}-12-31' required>"
         "<select name='deck' title='Clicking the event will study this deck'>"
         f"<option value=''>No deck</option>{deck_options}</select>"
         "<button type='submit' class='jdp-tl-save'>Add</button>"
@@ -483,7 +495,10 @@ def _w_timeline(col, settings, cols=3, rows=1) -> str:
             f"<span>{date:%a, %b} {date.day} · {countdown(days)}</span>"
             f"{deck_html}"
             f"<button type='button' class='jdp-tl-del' title='Remove event' "
-            f"onclick=\"event.stopPropagation();pycmd('jdp:event-del:{i}')\">"
+            f"data-title='{html.escape(title)}' data-date='{date.isoformat()}' "
+            'onclick="event.stopPropagation();this.disabled=true;'
+            "pycmd('jdp:event-del:'+JSON.stringify("
+            '{title:this.dataset.title,date:this.dataset.date}))">'
             "Remove</button></div></div>"
         )
     return (
@@ -678,7 +693,7 @@ def deck_progress_script(col) -> str:
         for did, (done, rem) in stats.deck_progress(col).items()
         if done
     }
-    return f"<script>window.JDP_DECK_PROGRESS = {json.dumps(data)};</script>"
+    return f"<script>window.JDP_DECK_PROGRESS = {script_json(data)};</script>"
 
 
 def deck_actions() -> str:

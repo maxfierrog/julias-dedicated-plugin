@@ -6,6 +6,8 @@ AnkiWeb installs (so never hardcode it). Module-level code runs inside the GUI
 process: keep it to hook registration and do real work in the hooks.
 """
 
+import datetime as dt
+import json
 import os
 
 from aqt import gui_hooks, mw
@@ -161,49 +163,115 @@ def _hide_top_bar_for_review() -> None:
         mw.toolbarWeb.show()
 
 
+def _strict_json(text: str):
+    def reject(name):
+        raise ValueError(f"invalid JSON constant {name}")
+
+    return json.loads(text, parse_constant=reject)
+
+
 def _home_command(cmd: str, arg: str) -> None:
     """Edits made directly on home-screen widgets."""
-    import datetime as dt
-    import json
-
-    from .settings import Settings
+    from .settings import MAX_EVENT_TITLE, MAX_EVENT_YEARS, Settings
 
     store = Settings(mw.col)
-    home = store.get()["home"]
+    today = dt.date.today()
+    # Past events are no longer shown or removable: drop them on any edit.
+    events = [
+        e
+        for e in store.get()["home"]["events"]
+        if e["date"] >= today.isoformat()
+    ]
     if cmd == "goal":
-        store.set("home.goal_minutes", max(5, min(600, int(arg))))
+        store.set("home.goal_minutes", int(arg))
     elif cmd == "event-add":
-        data = json.loads(arg)
-        title = str(data.get("title", "")).strip()[:60]
-        date = dt.date.fromisoformat(str(data.get("date", "")))  # validates
+        data = _strict_json(arg)
+        title = str(data.get("title", "")).strip()[:MAX_EVENT_TITLE]
+        date = dt.date.fromisoformat(str(data.get("date", "")))
+        if (
+            not title
+            or date < today
+            or date.year > today.year + MAX_EVENT_YEARS
+        ):
+            return
         deck = data.get("deck")
         deck = int(deck) if str(deck or "").isdigit() else None
         if deck is not None and not mw.col.decks.get(deck, default=False):
             deck = None
-        if title:
-            event = {"title": title, "date": date.isoformat()}
-            if deck is not None:
-                event["deck"] = deck
-            events = [*home["events"], event]
+        event = {"title": title, "date": date.isoformat()}
+        if deck is not None:
+            event["deck"] = deck
+        if not any(
+            e["title"] == title and e["date"] == event["date"] for e in events
+        ):  # a double submit adds it once
+            events.append(event)
             events.sort(key=lambda e: e["date"])
-            store.set("home.events", events)
+        store.set("home.events", events)
     elif cmd == "event-del":
-        events = list(home["events"])
-        i = int(arg)
-        if 0 <= i < len(events):
-            del events[i]
-            store.set("home.events", events)
+        # By identity, not position: a double click can't remove a neighbour.
+        data = _strict_json(arg)
+        for i, e in enumerate(events):
+            if e["title"] == data.get("title") and e["date"] == data.get(
+                "date"
+            ):
+                del events[i]
+                break
+        store.set("home.events", events)
     if mw.state == "deckBrowser":
         mw.deckBrowser.refresh()
 
 
 # --- Messages from our web UI -------------------------------------------
+# Any page can call pycmd(), including card templates from shared decks, so
+# every command is only accepted from the screen that legitimately sends it.
+
+_FROM_HOME = {
+    "study",
+    "settings",
+    "home-refresh",
+    "goal",
+    "event-add",
+    "event-del",
+}
+_FROM_SETTINGS = {"set", "reset", "feedback"}
+_FROM_REVIEWER = {"decks", "fatigue-dismiss"}  # harmless navigation only
+_DEV = {"dev-grab", "dev-tooltip", "dev-zoom", "dev-close-popup"}
+
+
+def _allowed(cmd: str, arg: str, context) -> bool:
+    import aqt.deckbrowser
+    import aqt.reviewer
+    import aqt.toolbar
+
+    from .settings_dialog import SettingsContext
+
+    home = isinstance(context, aqt.deckbrowser.DeckBrowser)
+    if cmd in _FROM_SETTINGS and isinstance(context, SettingsContext):
+        return True
+    if cmd == "set" and home:
+        # Edit mode saves only the widget layout from the home screen.
+        try:
+            return _strict_json(arg)[0] == "home.widgets"
+        except (ValueError, TypeError, IndexError, KeyError):
+            return False
+    if cmd in _FROM_HOME:
+        return home
+    if cmd in _FROM_REVIEWER:
+        return isinstance(context, aqt.reviewer.Reviewer)
+    if cmd in _DEV:
+        return bool(os.environ.get("ANKIDEV")) and isinstance(
+            context, aqt.toolbar.TopToolbar
+        )
+    return False
 
 
 def _on_js_message(handled, message: str, context):
     if not message.startswith("jdp:"):
         return handled
     cmd, _, arg = message[4:].partition(":")
+    if not _allowed(cmd, arg, context):
+        log.warning("ignored %r from %s", cmd, type(context).__name__)
+        return (True, None)
     try:
         if cmd == "study":
             study_deck(int(arg))
@@ -220,17 +288,17 @@ def _on_js_message(handled, message: str, context):
             from .settings_dialog import handle
 
             handle(cmd, arg)
-        elif cmd == "dev-grab" and os.environ.get("ANKIDEV"):
+        elif cmd == "dev-grab":
             _dev_grab(arg)
-        elif cmd == "dev-tooltip" and os.environ.get("ANKIDEV"):
+        elif cmd == "dev-tooltip":
             from aqt.qt import QCursor, QToolTip
 
             QToolTip.showText(QCursor.pos(), arg or "Back to decks (D)")
-        elif cmd == "dev-zoom" and os.environ.get("ANKIDEV"):
+        elif cmd == "dev-zoom":
             from . import zoom
 
             zoom.apply(float(arg))
-        elif cmd == "dev-close-popup" and os.environ.get("ANKIDEV"):
+        elif cmd == "dev-close-popup":
             from aqt.qt import QApplication
 
             if popup := QApplication.activePopupWidget():
@@ -241,7 +309,7 @@ def _on_js_message(handled, message: str, context):
             _session.fatigue_dismissed = True
             _push_session()
     except Exception:
-        log.exception("error handling %s", message)
+        log.exception("error handling %s", cmd)
     return (True, None)
 
 
@@ -352,6 +420,23 @@ gui_hooks.state_did_change.append(_on_state_change)
 gui_hooks.reviewer_did_answer_card.append(_on_answer)
 gui_hooks.reviewer_did_show_question.append(_on_show_question)
 gui_hooks.collection_did_load.append(_on_collection_loaded)
+
+
+def _on_profile_will_close() -> None:
+    from .settings_dialog import close_settings
+
+    close_settings()
+
+
+def _on_sync_finished() -> None:
+    from .settings_dialog import reload_settings
+
+    reload_settings()
+    web.refresh_live()
+
+
+gui_hooks.profile_will_close.append(_guard(_on_profile_will_close))
+gui_hooks.sync_did_finish.append(_guard(_on_sync_finished))
 # Anki updates its Qt palette on theme change; restyle after it does.
 gui_hooks.theme_did_change.append(
     lambda: QTimer.singleShot(0, _guard(web.apply_window_chrome))
