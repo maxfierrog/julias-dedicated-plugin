@@ -40,9 +40,22 @@ DEFAULTS: dict[str, Any] = {
     },
     "briefing": {
         "greeting": True,
-        "forecast": True,
-        "heatmap": True,
-        "retention": True,
+    },
+    "home": {
+        # Widgets on the home grid, in order (see briefing.WIDGETS). An entry
+        # is "id" (default size) or "id:COLSxROWS" for another allowed size.
+        "widgets": [
+            "timeline",
+            "forecast",
+            "streak",
+            "goal",
+            "retention",
+            "backlog",
+            "heatmap",
+        ],
+        "goal_minutes": 30,
+        # Timeline events: [{"title": str, "date": "YYYY-MM-DD"}, ...]
+        "events": [],
     },
 }
 

@@ -259,10 +259,7 @@
         "Home",
         row("Your name", null, nameField()),
         row("Greeting", null, toggle("briefing.greeting")),
-        row("Briefing", "The summary on the deck screen", toggle("modules.briefing")),
-        row("Next 7 days", null, toggle("briefing.forecast")),
-        row("Retention", null, toggle("briefing.retention")),
-        row("Activity map", null, toggle("briefing.heatmap")),
+        row("Briefing and widgets", "Greeting, summary and widgets on the home screen. Use “Edit widgets” at the bottom of it to choose and arrange them.", toggle("modules.briefing")),
       ),
       section(
         "Everything else",

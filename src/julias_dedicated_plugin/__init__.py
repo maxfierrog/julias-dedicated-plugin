@@ -161,6 +161,42 @@ def _hide_top_bar_for_review() -> None:
         mw.toolbarWeb.show()
 
 
+def _home_command(cmd: str, arg: str) -> None:
+    """Edits made directly on home-screen widgets."""
+    import datetime as dt
+    import json
+
+    from .settings import Settings
+
+    store = Settings(mw.col)
+    home = store.get()["home"]
+    if cmd == "goal":
+        store.set("home.goal_minutes", max(5, min(600, int(arg))))
+    elif cmd == "event-add":
+        data = json.loads(arg)
+        title = str(data.get("title", "")).strip()[:60]
+        date = dt.date.fromisoformat(str(data.get("date", "")))  # validates
+        deck = data.get("deck")
+        deck = int(deck) if str(deck or "").isdigit() else None
+        if deck is not None and not mw.col.decks.get(deck, default=False):
+            deck = None
+        if title:
+            event = {"title": title, "date": date.isoformat()}
+            if deck is not None:
+                event["deck"] = deck
+            events = [*home["events"], event]
+            events.sort(key=lambda e: e["date"])
+            store.set("home.events", events)
+    elif cmd == "event-del":
+        events = list(home["events"])
+        i = int(arg)
+        if 0 <= i < len(events):
+            del events[i]
+            store.set("home.events", events)
+    if mw.state == "deckBrowser":
+        mw.deckBrowser.refresh()
+
+
 # --- Messages from our web UI -------------------------------------------
 
 
@@ -175,6 +211,8 @@ def _on_js_message(handled, message: str, context):
             from .settings_dialog import open_settings
 
             open_settings()
+        elif cmd in ("goal", "event-add", "event-del"):
+            _home_command(cmd, arg)
         elif cmd in ("set", "reset", "feedback"):
             from .settings_dialog import handle
 
@@ -185,6 +223,10 @@ def _on_js_message(handled, message: str, context):
             from aqt.qt import QCursor, QToolTip
 
             QToolTip.showText(QCursor.pos(), arg or "Back to decks (D)")
+        elif cmd == "dev-zoom" and os.environ.get("ANKIDEV"):
+            from . import zoom
+
+            zoom.apply(float(arg))
         elif cmd == "dev-close-popup" and os.environ.get("ANKIDEV"):
             from aqt.qt import QApplication
 
@@ -252,6 +294,9 @@ _watcher = _WindowWatcher()
 
 @_guard
 def _on_collection_loaded(col) -> None:
+    from . import zoom
+
+    zoom.apply()
     apply_focus_mode()
     from . import qt_theme
 
@@ -262,9 +307,11 @@ def _on_collection_loaded(col) -> None:
 
 
 def _on_main_window_init() -> None:
+    from . import zoom
     from .settings_dialog import add_menu_action
 
     add_menu_action()
+    zoom.install()
     mw.app.installEventFilter(_watcher)
     log.info("Julia's Dedicated Plugin %s loaded", __version__)
 

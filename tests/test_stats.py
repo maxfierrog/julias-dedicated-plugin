@@ -85,3 +85,38 @@ def test_deck_progress_counts_today(seeded_col):
     col.sched.answerCard(card, 3)
     done2, _ = stats.deck_progress(col)[mcat]
     assert done2 == 1
+
+
+def test_minutes_by_day(seeded_col):
+    m = stats.minutes_by_day(seeded_col, 14)
+    assert len(m) == 14 and m[-1] == 0
+    assert any(x > 0 for x in m)
+
+
+def test_weak_spots_sorted_by_recall(seeded_col):
+    spots = stats.weak_spots(seeded_col, days=90, min_reviews=10)
+    assert spots, "seeded history should have reviews"
+    assert [w.retention for w in spots] == sorted(w.retention for w in spots)
+    assert all("::" in w.name or w.name for w in spots)
+
+
+def test_backlog_plan(seeded_col):
+    b = stats.backlog(seeded_col)
+    assert b.overdue > 0  # the seed skips the last two days
+    assert b.extra_per_day >= 10
+    assert b.days_to_clear * b.extra_per_day >= b.overdue
+
+
+def test_finish_lines(seeded_col):
+    lines = stats.finish_lines(seeded_col)
+    names = {f.name for f in lines}
+    assert "MCAT" in names
+    mcat = next(f for f in lines if f.name == "MCAT")
+    assert mcat.unseen > 0 and mcat.per_day > 0 and mcat.days_left > 0
+
+
+def test_new_card_cost(seeded_col):
+    cost = stats.new_card_cost(seeded_col)
+    assert cost is not None
+    assert 2 < cost.reviews_first_month < 15
+    assert cost.minutes_per_day(20) > 0

@@ -62,6 +62,14 @@ def _icon(name: str) -> str:
         "flame": "<path d='M12 20.5c3.3 0 6-2.4 6-5.8 0-3.9-3.4-5.6-3.9-9.7-2.6 "
         "1.6-4 4.1-4 6.3-1.2-.6-1.8-1.9-1.9-3.1C6.9 9.8 6 11.9 6 14.7c0 3.4 2.7 "
         "5.8 6 5.8z'/>",
+        "search": "<circle cx='11' cy='11' r='6.5'/><path d='M16 16l4.5 4.5'/>",
+        "inbox": "<path d='M4 13l2.5-7.5h11L20 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z'/>"
+        "<path d='M4 13h4.5l1.5 2.5h4l1.5-2.5H20'/>",
+        "flag": "<path d='M5.5 21V4.5'/><path d='M5.5 4.5h11l-2 4 2 4h-11'/>",
+        "scale": "<path d='M12 4v16M7 20h10M5 7h14'/>"
+        "<path d='M5 7l-2.5 6a2.5 2.5 0 0 0 5 0zM19 7l-2.5 6a2.5 2.5 0 0 0 5 0z'/>",
+        "target": "<circle cx='12' cy='12' r='8.5'/><circle cx='12' cy='12' r='4.5'/>"
+        "<circle cx='12' cy='12' r='0.8'/>",
         "dots": "<circle cx='7' cy='8' r='1.6'/><circle cx='12' cy='8' r='1.6'/>"
         "<circle cx='17' cy='8' r='1.6'/><circle cx='7' cy='13' r='1.6'/>"
         "<circle cx='12' cy='13' r='1.6'/><circle cx='7' cy='18' r='1.6'/>",
@@ -115,21 +123,60 @@ def _summary_line(col, pace: stats.Pace) -> str:
     return f"You have <b>{total} {cards}</b> today, about <b>{eta}</b>."
 
 
-def _tile(kind: str, icon: str, title: str, body: str) -> str:
+def _tile(
+    kind: str,
+    icon: str,
+    title: str,
+    body: str,
+    chip: str = "",
+    center=False,
+    end_note: str = "",
+) -> str:
+    """A widget card: title row (+ optional context chip), then a body that
+    fills the rest and is vertically centered (and horizontally, if asked)."""
+    chip_html = f"<span class='jdp-chip'>{chip}</span>" if chip else ""
+    align = " jdp-center" if center else ""
+    if end_note:
+        # Lists sit at the top; a quiet note fills leftover space (shown by
+        # home.js only when there's a lot of it).
+        align = " jdp-list"
+        body += f"<div class='jdp-list-end'><span>{end_note}</span></div>"
     return (
         f"<section class='jdp-tile jdp-tile-{kind}'>"
-        f"<h4>{_icon(icon)}{title}</h4>{body}</section>"
+        f"<h4>{_icon(icon)}<span>{title}</span>{chip_html}</h4>"
+        f"<div class='jdp-tile-body{align}'>{body}</div></section>"
     )
 
 
-def _forecast_tile(col) -> str:
-    days = stats.forecast(col, 7)
+def _pct(x: float | None) -> str:
+    return "–" if x is None else f"{round(100 * x)}%"
+
+
+def _short_deck(name: str) -> str:
+    """Last part of a deck name, without a leading ordering number
+    ("3 Psych-Soc" -> "Psych-Soc")."""
+    import re
+
+    leaf = name.split("::")[-1]
+    return html.escape(re.sub(r"^\d+[.)]?\s+", "", leaf) or leaf)
+
+
+# --- Widgets -------------------------------------------------------------
+# Each widget renders the inside of one grid item; `cols` is its width in
+# grid slots (one slot = the size of the Streak widget).
+
+
+def _w_forecast(col, settings, cols=1, rows=1) -> str:
+    days = stats.forecast(col, 14 if cols >= 3 else 7)
     peak = max(days) or 1
     today = dt.date.today()
     bars = []
     for i, n in enumerate(days):
+        day = today + dt.timedelta(days=i)
         label = (
-            "today" if i == 0 else (today + dt.timedelta(days=i)).strftime("%a")
+            "today"
+            if i == 0
+            else day.strftime("%a" if len(days) <= 7 else "%-d")
         )
         h = max(8, round(60 * n / peak)) if n else 6
         bars.append(
@@ -142,27 +189,25 @@ def _forecast_tile(col) -> str:
         "calendar",
         "Coming up",
         f"<div class='jdp-bars'>{''.join(bars)}</div>",
+        chip=f"{sum(days)} reviews",
     )
 
 
-def _pct(x: float | None) -> str:
-    return "–" if x is None else f"{round(100 * x)}%"
-
-
-def _retention_tile(col) -> str:
+def _w_retention(col, settings, cols=1, rows=1) -> str:
     r = stats.retention(col)
     return _tile(
         "green",
         "heart",
         "Memory",
         f"<div class='jdp-big'>{_pct(r.overall)}</div>"
-        "<div class='jdp-sub'>of reviews remembered this month"
-        f"<br><span class='jdp-muted'>young {_pct(r.young)} · mature "
-        f"{_pct(r.mature)}</span></div>",
+        "<div class='jdp-sub'>remembered this month</div>"
+        f"<div class='jdp-pills'><span>young {_pct(r.young)}</span>"
+        f"<span>mature {_pct(r.mature)}</span></div>",
+        center=True,
     )
 
 
-def _streak_tile(col) -> str:
+def _w_streak(col, settings, cols=1, rows=1) -> str:
     s = stats.streak(col)
     if s.current:
         note = "Done for today!" if s.studied_today else "Keep it going today"
@@ -174,15 +219,17 @@ def _streak_tile(col) -> str:
         "flame",
         "Streak",
         f"<div class='jdp-big'>{s.current} <small>{unit}</small></div>"
-        f"<div class='jdp-sub'>{note}<br><span class='jdp-muted'>best: "
-        f"{s.longest} days</span></div>",
+        f"<div class='jdp-sub'>{note}</div>",
+        chip=f"best {s.longest}",
+        center=True,
     )
 
 
-def _heatmap(col) -> str:
+def _w_heatmap(col, settings, cols=1, rows=1) -> str:
     # Columns are weeks (Mon..Sun), ending with the current week.
     today = dt.date.today()
-    days = WEEKS * 7 - (6 - today.weekday())
+    weeks = WEEKS if cols >= 3 else 24  # same dot size at both widths
+    days = weeks * 7 - (6 - today.weekday())
     counts = stats.daily_counts(col, days)
     nonzero = sorted(c for c in counts if c)
     # Levels relative to her own typical day, so the map stays meaningful.
@@ -200,10 +247,345 @@ def _heatmap(col) -> str:
         cells.append(
             f"<i class='l{level}{today_cls}' title='{day:%a %b %-d}: {c} cards'></i>"
         )
+    return _tile(
+        "accent",
+        "dots",
+        "Your study days",
+        f"<div class='jdp-heatmap'>{''.join(cells)}</div>",
+    )
+
+
+def _w_weak_spots(col, settings, cols=1, rows=1) -> str:
+    spots = stats.weak_spots(col, limit=8 if rows >= 2 else 3)
+    if not spots:
+        body = "<div class='jdp-sub'>Not enough reviews yet this month.</div>"
+    else:
+        rows_html = "".join(
+            "<div class='jdp-meter'>"
+            f"<span class='jdp-meter-name' title='{html.escape(w.name)}'>"
+            f"{_short_deck(w.name)}</span>"
+            f"<span class='jdp-meter-bar'><i style='width:{round(100 * w.retention)}%'>"
+            f"</i></span><b>{_pct(w.retention)}</b></div>"
+            for w in spots
+        )
+        body = f"<div class='jdp-meters'>{rows_html}</div>"
+        return _tile(
+            "learn",
+            "search",
+            "Weak spots",
+            body,
+            chip="last 30 days",
+            end_note="No other weak spots",
+        )
+    return _tile("learn", "search", "Weak spots", body, chip="last 30 days")
+
+
+def _w_backlog(col, settings, cols=1, rows=1) -> str:
+    b = stats.backlog(col)
+    if not b.overdue:
+        check = (
+            "<svg class='jdp-check-big' viewBox='0 0 24 24' fill='none' "
+            "stroke='currentColor' stroke-width='2.6' stroke-linecap='round' "
+            "stroke-linejoin='round' aria-hidden='true'><path d='M5 12.5l4.5 4.5L19 7.5'/>"
+            "</svg>"
+        )
+        return _tile(
+            "green",
+            "inbox",
+            "Backlog",
+            f"{check}<div class='jdp-sub'>All caught up</div>",
+            center=True,
+        )
+    else:
+        by = (dt.date.today() + dt.timedelta(days=b.days_to_clear)).strftime(
+            "%a"
+        )
+        when = "tomorrow" if b.days_to_clear == 1 else f"by {by}"
+        body = (
+            f"<div class='jdp-big'>{b.overdue}</div>"
+            "<div class='jdp-sub'>overdue</div>"
+            f"<div class='jdp-pills'><span>+{b.extra_per_day}/day → clear {when}"
+            "</span></div>"
+        )
+    return _tile("learn", "inbox", "Backlog", body, center=True)
+
+
+def _w_finish_line(col, settings, cols=1, rows=1) -> str:
+    lines = stats.finish_lines(col)
+    if not lines:
+        return _tile(
+            "accent",
+            "flag",
+            "Finish line",
+            "<div class='jdp-sub'>You've seen every card in your decks!</div>",
+            center=True,
+        )
+    items = []
+    for f in lines[: 8 if rows >= 2 else 3]:
+        seen = f.total - f.unseen
+        if f.days_left is None:
+            when = "<span class='jdp-muted'>paused</span>"
+        else:
+            date = dt.date.today() + dt.timedelta(days=f.days_left)
+            when = f"<b>{date.strftime('%b %-d' if f.days_left < 300 else '%b %Y')}</b>"
+        items.append(
+            "<div class='jdp-meter jdp-finish'>"
+            f"<span class='jdp-meter-name'>{_short_deck(f.name)}</span>"
+            f"<span class='jdp-meter-bar' title='{seen} of {f.total} seen'>"
+            f"<i style='width:{round(100 * seen / max(1, f.total))}%'></i></span>"
+            f"{when}</div>"
+        )
+    return _tile(
+        "accent",
+        "flag",
+        "Finish line",
+        f"<div class='jdp-meters'>{''.join(items)}</div>",
+        chip="at your pace",
+        end_note="No other decks with unseen cards",
+    )
+
+
+def _w_new_cost(col, settings, cols=1, rows=1) -> str:
+    cost = stats.new_card_cost(col)
+    if cost is None:
+        body = "<div class='jdp-sub'>Needs a month of history</div>"
+    else:
+        body = (
+            f"<div class='jdp-big'>+{cost.minutes_per_day(20):.0f} "
+            "<small>min/day</small></div>"
+            "<div class='jdp-sub'>if you add 20 new cards today</div>"
+            f"<div class='jdp-pills'><span>{cost.reviews_first_month:.1f} reviews "
+            "each</span></div>"
+        )
+    return _tile("sun", "scale", "New-card cost", body, center=True)
+
+
+def _w_goal(col, settings, cols=1, rows=1) -> str:
+    goal = max(5, int(settings["home"]["goal_minutes"]))
+    done = stats.minutes_by_day(col, 1)[-1]
+    frac = min(1.0, done / goal)
+    r = 30
+    c = 2 * 3.14159 * r
+    reached = done >= goal
+    return _tile(
+        "green" if reached else "accent",
+        "target",
+        "Daily goal",
+        "<div class='jdp-goal'>"
+        "<svg viewBox='0 0 72 72' width='76' height='76' aria-hidden='true'>"
+        f"<circle cx='36' cy='36' r='{r}' class='jdp-goal-bg'/>"
+        f"<circle cx='36' cy='36' r='{r}' class='jdp-goal-ring' "
+        f"stroke-dasharray='{frac * c:.1f} {c:.1f}' transform='rotate(-90 36 36)'/>"
+        "</svg>"
+        f"<div class='jdp-goal-n'>{round(done)}</div></div>"
+        f"<div class='jdp-sub'>{'goal reached!' if reached else f'of {goal} min today'}"
+        "</div>"
+        "<div class='jdp-goal-adjust'>"
+        f"<button title='Lower goal' onclick=\"pycmd('jdp:goal:{goal - 5}')\">−</button>"
+        f"<button title='Raise goal' onclick=\"pycmd('jdp:goal:{goal + 5}')\">+</button>"
+        "</div>",
+        center=True,
+    )
+
+
+def _w_timeline(col, settings, cols=3, rows=1) -> str:
+    """One quiet line: today on the left, a dot per upcoming event with a
+    short countdown above it. Details (name, date, deck) appear on hover;
+    clicking an event linked to a deck studies that deck."""
+    today = dt.date.today()
+    upcoming = []
+    for i, e in enumerate(settings["home"]["events"]):
+        try:
+            date = dt.date.fromisoformat(e["date"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        if date < today:
+            continue
+        deck = None
+        if isinstance(e.get("deck"), int):
+            d = col.decks.get(e["deck"], default=False)
+            deck = (d["id"], d["name"]) if d else None
+        upcoming.append(
+            (i, (date - today).days, date, str(e.get("title", "")), deck)
+        )
+
+    deck_options = "".join(
+        f"<option value='{d.id}'>{html.escape(d.name.replace('::', ' › '))}</option>"
+        for d in sorted(col.decks.all_names_and_ids(), key=lambda d: d.name)
+        if d.id != 1 or col.decks.card_count(1, include_subdecks=False)
+    )
+    form = (
+        "<form class='jdp-tl-form' hidden>"
+        "<input type='text' name='title' placeholder='Event, e.g. Biochem midterm' "
+        "maxlength='60' required>"
+        f"<input type='date' name='date' min='{today.isoformat()}' required>"
+        "<select name='deck' title='Clicking the event will study this deck'>"
+        f"<option value=''>No deck</option>{deck_options}</select>"
+        "<button type='submit' class='jdp-tl-save'>Add</button>"
+        "<button type='button' class='jdp-tl-cancel'>Cancel</button></form>"
+    )
+    add_btn = "<button type='button' class='jdp-tl-add'>+ Add event</button>"
+
+    def countdown(days: int) -> str:
+        return (
+            "today" if days == 0 else "1 day" if days == 1 else f"{days} days"
+        )
+
+    if not upcoming:
+        return (
+            "<section class='jdp-tile jdp-tile-accent jdp-timeline'>"
+            f"<h4>{_icon('calendar')}<span>Timeline</span>{add_btn}</h4>{form}"
+            "<div class='jdp-tile-body jdp-center'><div class='jdp-sub'>Add exams "
+            "and deadlines to count down to them.</div></div></section>"
+        )
+
+    _, first_days, _, first_title, _ = upcoming[0]
+    chip = (
+        f"<span class='jdp-chip'>{html.escape(first_title)} · "
+        f"{countdown(first_days)}</span>"
+    )
+    horizon = max(30, round(max(u[1] for u in upcoming) * 1.08))
+
+    def pos(days: int) -> float:
+        return 2 + 96 * days / horizon
+
+    months = []
+    month = dt.date(today.year, today.month, 1)
+    while True:
+        month = (month + dt.timedelta(days=32)).replace(day=1)
+        d = (month - today).days
+        if d > horizon:
+            break
+        months.append(
+            f"<span class='jdp-tl-month' style='left:{pos(d):.1f}%'>"
+            f"{month.strftime('%b')}</span>"
+        )
+
+    dots = []
+    for i, days, date, title, deck in upcoming:
+        soon = " jdp-soon" if days <= 7 else ""
+        deck_html, click = "", ""
+        if deck:
+            deck_html = f"<span class='jdp-tl-pop-deck'>Study {_short_deck(deck[1])} →</span>"
+            click = f" onclick=\"pycmd('jdp:study:{deck[0]}')\""
+        short = "today" if days == 0 else f"{days} d"
+        dots.append(
+            f"<div class='jdp-tl-event{soon}{' jdp-tl-linked' if deck else ''}' "
+            f"style='left:{pos(days):.1f}%' tabindex='0'{click}>"
+            f"<span class='jdp-tl-count'>{short}</span><i class='jdp-tl-dot'></i>"
+            "<div class='jdp-tl-pop' role='tooltip'>"
+            f"<b>{html.escape(title)}</b>"
+            f"<span>{date.strftime('%a, %b %-d')} · {countdown(days)}</span>"
+            f"{deck_html}"
+            f"<button type='button' class='jdp-tl-del' title='Remove event' "
+            f"onclick=\"event.stopPropagation();pycmd('jdp:event-del:{i}')\">"
+            "Remove</button></div></div>"
+        )
     return (
-        "<section class='jdp-tile jdp-heat'>"
-        f"<h4>{_icon('dots')}Your study days</h4>"
-        f"<div class='jdp-heatmap'>{''.join(cells)}</div></section>"
+        "<section class='jdp-tile jdp-tile-accent jdp-timeline'>"
+        f"<h4>{_icon('calendar')}<span>Timeline</span>{chip}{add_btn}</h4>{form}"
+        "<div class='jdp-tile-body'><div class='jdp-tl'>"
+        "<div class='jdp-tl-line'></div>"
+        "<span class='jdp-tl-today'>today</span>"
+        f"{''.join(months)}{''.join(dots)}</div></div></section>"
+    )
+
+
+WIDGETS = {
+    # id: (name, description, allowed sizes as (cols, rows), first = default,
+    #      render(col, settings, cols, rows))
+    "timeline": (
+        "Timeline",
+        "Days until your exams and milestones",
+        [(3, 1)],
+        _w_timeline,
+    ),
+    "forecast": (
+        "Coming up",
+        "Reviews due over the next one or two weeks",
+        [(2, 1), (3, 1)],
+        _w_forecast,
+    ),
+    "streak": ("Streak", "Days in a row you've studied", [(1, 1)], _w_streak),
+    "goal": (
+        "Daily goal",
+        "Today's study time against your goal",
+        [(1, 1)],
+        _w_goal,
+    ),
+    "retention": (
+        "Memory",
+        "How much you remembered this month",
+        [(1, 1)],
+        _w_retention,
+    ),
+    "backlog": (
+        "Backlog",
+        "Overdue cards and a plan to catch up",
+        [(1, 1)],
+        _w_backlog,
+    ),
+    "new_cost": (
+        "New-card cost",
+        "What new cards add to future reviews",
+        [(1, 1)],
+        _w_new_cost,
+    ),
+    "weak_spots": (
+        "Weak spots",
+        "The topics you're forgetting most",
+        [(2, 1), (2, 2)],
+        _w_weak_spots,
+    ),
+    "finish_line": (
+        "Finish line",
+        "When you'll have seen every card",
+        [(2, 1), (2, 2)],
+        _w_finish_line,
+    ),
+    "heatmap": (
+        "Your study days",
+        "Your study activity, day by day",
+        [(3, 1), (2, 1)],
+        _w_heatmap,
+    ),
+}
+
+
+def parse_entry(entry: str) -> tuple[str, tuple[int, int]] | None:
+    """'forecast' or 'forecast:3x1' -> (id, size); None if unknown/invalid.
+    Sizes not allowed for the widget fall back to its default."""
+    wid, _, size = str(entry).partition(":")
+    if wid not in WIDGETS:
+        return None
+    sizes = WIDGETS[wid][2]
+    try:
+        c, r = (int(x) for x in size.split("x"))
+        if (c, r) in sizes:
+            return wid, (c, r)
+    except ValueError:
+        pass
+    return wid, sizes[0]
+
+
+def _widget(wid: str, size: tuple[int, int], col, settings) -> str:
+    name, desc, sizes, render = WIDGETS[wid]
+    cols, rows = size
+    try:
+        inner = render(col, settings, cols, rows)
+    except Exception:  # one broken widget must never break the home screen
+        inner = _tile(
+            "accent",
+            "dots",
+            html.escape(name),
+            "<div class='jdp-sub'>Couldn't load this widget.</div>",
+        )
+    allowed = ",".join(f"{c}x{r}" for c, r in sizes)
+    return (
+        f"<div class='jdp-widget jdp-cols-{cols} jdp-rows-{rows}' data-id='{wid}' "
+        f"data-name='{html.escape(name)}' data-desc='{html.escape(desc)}' "
+        f"data-size='{cols}x{rows}' data-sizes='{allowed}' data-cols='{cols}'>"
+        f"{inner}</div>"
     )
 
 
@@ -222,18 +604,26 @@ def home_html(col, settings: dict, now: dt.datetime | None = None) -> str:
         "onclick=\"pycmd('jdp:settings');return false;\">"
         f"{GEAR}</button></div>"
     )
-    tiles = []
-    if b["forecast"]:
-        tiles.append(_forecast_tile(col))
-    if b["retention"]:
-        tiles.append(_retention_tile(col))
-    tiles.append(_streak_tile(col))
-    body = f"<div class='jdp-tiles'>{''.join(tiles)}</div>"
-    if b["heatmap"]:
-        body += _heatmap(col)
+    layout, seen = [], set()
+    for entry in settings["home"]["widgets"]:
+        parsed = parse_entry(entry)
+        if parsed and parsed[0] not in seen:
+            seen.add(parsed[0])
+            layout.append(parsed)
+    grid = "".join(_widget(w, size, col, settings) for w, size in layout)
+    # Every widget not on the grid, pre-rendered for the "Add widget" picker.
+    catalog = "".join(
+        _widget(w, WIDGETS[w][2][0], col, settings)
+        for w in WIDGETS
+        if w not in seen
+    )
     return (
         f"<header class='jdp-hello'>{head}</header>"
-        f"<div class='jdp-insights'>{body}</div>"
+        "<div class='jdp-insights'>"
+        f"<div class='jdp-grid'>{grid}</div>"
+        f"<template id='jdp-catalog'>{catalog}</template>"
+        "<div class='jdp-edit-bar'><button class='jdp-link jdp-edit-toggle' "
+        "type='button'>Edit widgets</button></div></div>"
     )
 
 

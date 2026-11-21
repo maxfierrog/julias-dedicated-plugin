@@ -508,16 +508,6 @@ html.jdp-ctx-deckbrowser .jdp-insights {
   margin-top: calc(16px * var(--jdp-space));
   text-align: left;
 }
-.jdp-tiles {
-  display: grid;
-  grid-template-columns: 1.45fr 1fr 1fr;
-  gap: calc(14px * var(--jdp-space));
-}
-@media (max-width: 640px) {
-  .jdp-tiles {
-    grid-template-columns: 1fr;
-  }
-}
 .jdp-tile {
   --tint: var(--jdp-accent);
   background: color-mix(in srgb, var(--tint) 8%, var(--jdp-elevated));
@@ -535,6 +525,68 @@ html.jdp-ctx-deckbrowser .jdp-insights {
 }
 html.night-mode .jdp-tile {
   background: color-mix(in srgb, var(--tint) 10%, var(--jdp-elevated));
+}
+.jdp-tile {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+/* Body fills the card below the title and centers its content vertically;
+   small cards also center horizontally. */
+.jdp-tile-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 0;
+}
+.jdp-tile-body.jdp-list {
+  justify-content: flex-start;
+}
+.jdp-list-end {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--jdp-faint);
+}
+.jdp-list-end.jdp-hidden span {
+  visibility: hidden;
+}
+.jdp-tile-body.jdp-center {
+  align-items: center;
+  text-align: center;
+}
+.jdp-tile h4 > span:not(.jdp-chip) {
+  flex: 1;
+  min-width: 0;
+}
+.jdp-chip {
+  flex: none;
+  padding: 2px 9px;
+  border-radius: var(--jdp-radius-pill);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--tint) 75%, var(--jdp-fg));
+  background: color-mix(in srgb, var(--tint) 12%, transparent);
+}
+.jdp-pills {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+.jdp-pills span {
+  padding: 2px 9px;
+  border-radius: var(--jdp-radius-pill);
+  font-size: 11.5px;
+  font-weight: 650;
+  color: var(--jdp-subtle);
+  background: color-mix(in srgb, var(--jdp-fg) 6%, transparent);
 }
 .jdp-tile h4 {
   display: flex;
@@ -563,7 +615,7 @@ html.night-mode .jdp-tile {
   color: var(--jdp-subtle);
 }
 .jdp-sub {
-  margin-top: 6px;
+  margin-top: 4px;
   font-size: 13px;
   line-height: 1.5;
   color: var(--jdp-subtle);
@@ -614,9 +666,7 @@ html.night-mode .jdp-tile {
   color: var(--jdp-subtle);
   font-variant-numeric: tabular-nums;
 }
-.jdp-heat {
-  margin-top: calc(14px * var(--jdp-space));
-}
+
 .jdp-heatmap {
   display: grid;
   grid-auto-flow: column;
@@ -800,4 +850,450 @@ html.jdp-ctx-reviewer-bottom td.stat button:hover {
     animation: none !important;
     transition: none !important;
   }
+}
+
+/* ---- Home widget grid ----------------------------------------------------
+   3 columns; one slot = the Streak widget. Widgets span 1-3 columns and
+   flow densely, so removing or moving one never leaves a hole. */
+/* Fixed slot height: a widget's size depends only on its own footprint,
+   never on its neighbors (widgets are composed to fit their slots). */
+.jdp-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: 12.8rem;
+  grid-auto-flow: row dense;
+  gap: calc(14px * var(--jdp-space));
+}
+.jdp-widget {
+  position: relative;
+  min-width: 0;
+  display: flex;
+}
+.jdp-widget > .jdp-tile {
+  flex: 1;
+  min-width: 0;
+}
+.jdp-cols-2 { grid-column: span 2; }
+.jdp-cols-3 { grid-column: span 3; }
+.jdp-rows-2 { grid-row: span 2; }
+@media (max-width: 640px) {
+  .jdp-grid { grid-template-columns: minmax(0, 1fr); }
+  .jdp-cols-2, .jdp-cols-3 { grid-column: span 1; }
+}
+.jdp-tile h4 .jdp-tl-add {
+  margin-left: auto;
+}
+.jdp-tile-learn { --tint: var(--jdp-learn); }
+
+.jdp-edit-bar {
+  display: flex;
+  justify-content: center;
+  margin-top: calc(16px * var(--jdp-space));
+}
+html.jdp button.jdp-edit-toggle.jdp-primary {
+  padding: 6px 18px !important;
+}
+
+/* Edit mode: dashed outlines, a remove badge, drag to reorder. */
+html.jdp-editing .jdp-grid > .jdp-widget {
+  cursor: grab;
+}
+html.jdp-editing .jdp-grid > .jdp-widget > .jdp-tile {
+  pointer-events: none;
+  outline: 2px dashed color-mix(in srgb, var(--jdp-accent) 45%, transparent);
+  outline-offset: 3px;
+}
+.jdp-w-resize {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  z-index: 2;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--jdp-radius-pill);
+  background: var(--jdp-accent);
+  border: 3px solid var(--jdp-canvas);
+  cursor: nwse-resize;
+  touch-action: none;
+}
+.jdp-w-resize::after {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border-right: 2px solid var(--jdp-on-accent);
+  border-bottom: 2px solid var(--jdp-on-accent);
+  border-radius: 1px;
+}
+html.jdp-editing .jdp-grid > .jdp-widget.jdp-resizing > .jdp-tile {
+  outline-style: solid;
+}
+html.jdp-editing .jdp-grid > .jdp-widget.jdp-dragging {
+  opacity: 0.4;
+}
+html.jdp button.jdp-w-remove {
+  position: absolute;
+  top: -9px;
+  right: -9px;
+  z-index: 2;
+  width: 26px;
+  height: 26px;
+  padding: 0 !important;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--jdp-subtle) !important;
+  background: var(--jdp-elevated) !important;
+  border: 2px solid var(--jdp-border) !important;
+  border-radius: var(--jdp-radius-pill) !important;
+  box-shadow: none !important;
+}
+html.jdp button.jdp-w-remove:hover {
+  color: var(--jdp-learn) !important;
+  border-color: var(--jdp-learn) !important;
+}
+.jdp-picker {
+  margin-top: calc(18px * var(--jdp-space));
+  padding: 14px 16px 16px;
+  border: 2px dashed var(--jdp-border);
+  border-radius: calc(var(--jdp-radius) + 6px);
+}
+.jdp-picker h4 {
+  margin: 0 0 10px;
+  font-size: 15px;
+  color: var(--jdp-subtle);
+}
+.jdp-picker-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+  gap: 10px;
+}
+html.jdp button.jdp-picker-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 8px;
+  padding: 10px 14px !important;
+  text-align: left;
+  border-radius: var(--jdp-radius) !important;
+}
+.jdp-picker-name {
+  font-size: 14px;
+}
+.jdp-picker-size {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--jdp-accent);
+}
+.jdp-picker-desc {
+  grid-column: span 2;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--jdp-subtle);
+}
+
+/* Weak spots: name / bar / percent rows */
+.jdp-meters {
+  display: grid;
+  gap: 8px;
+}
+.jdp-meter {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) 2.6em;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+.jdp-meter-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 650;
+}
+.jdp-meter-bar {
+  height: 8px;
+  border-radius: var(--jdp-radius-pill);
+  background: color-mix(in srgb, var(--jdp-fg) 8%, transparent);
+  overflow: hidden;
+}
+.jdp-meter-bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: color-mix(in srgb, var(--jdp-learn) 55%, var(--jdp-sun));
+}
+.jdp-meter.jdp-finish {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) 4.2em;
+}
+.jdp-meter.jdp-finish .jdp-meter-bar i {
+  background: var(--jdp-accent);
+}
+.jdp-meter.jdp-finish b {
+  color: var(--jdp-accent);
+}
+.jdp-meter b {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Finish line rows */
+.jdp-lines {
+  display: grid;
+  gap: 7px;
+}
+.jdp-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: baseline;
+  gap: 12px;
+  font-size: 13px;
+}
+.jdp-line-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 650;
+}
+.jdp-line b {
+  color: var(--jdp-accent);
+}
+
+
+/* Daily goal: the minutes sit inside the ring */
+.jdp-goal {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+.jdp-goal svg {
+  grid-area: 1 / 1;
+}
+.jdp-goal-n {
+  grid-area: 1 / 1;
+  font-family: var(--jdp-font-display);
+  font-size: 26px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.jdp-goal-bg {
+  fill: none;
+  stroke: color-mix(in srgb, var(--jdp-fg) 9%, transparent);
+  stroke-width: 7;
+}
+.jdp-goal-ring {
+  fill: none;
+  stroke: var(--tint);
+  stroke-width: 7;
+  stroke-linecap: round;
+}
+.jdp-goal-adjust {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.jdp-widget:hover .jdp-goal-adjust {
+  opacity: 1;
+}
+html.jdp .jdp-goal-adjust button {
+  width: 24px;
+  height: 24px;
+  padding: 0 !important;
+  font-size: 14px;
+  line-height: 1;
+  box-shadow: none !important;
+}
+
+/* ---- Timeline ------------------------------------------------------------ */
+html.jdp .jdp-tl-add,
+html.jdp .jdp-tl-cancel {
+  padding: 3px 12px !important;
+  font-size: 12.5px;
+  color: var(--jdp-accent) !important;
+  background: transparent !important;
+  border-color: color-mix(in srgb, var(--jdp-accent) 35%, transparent) !important;
+  box-shadow: none !important;
+}
+.jdp-tl-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+.jdp-tl-form[hidden] {
+  display: none;
+}
+.jdp-tl-form input {
+  flex: 1;
+  min-width: 10rem;
+  padding: 7px 12px;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--jdp-fg);
+  background: var(--jdp-elevated);
+  border: 2px solid var(--jdp-border);
+  border-radius: var(--jdp-radius-pill);
+  outline: none;
+}
+.jdp-tl-form select {
+  flex: 0 1 auto;
+  max-width: 14rem;
+  padding: 7px 12px;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--jdp-fg);
+  background: var(--jdp-elevated);
+  border: 2px solid var(--jdp-border);
+  border-radius: var(--jdp-radius-pill);
+  outline: none;
+}
+.jdp-tl-form input[type="date"] {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+.jdp-tl-form input:focus {
+  border-color: var(--jdp-accent);
+}
+html.jdp .jdp-tl-save {
+  color: var(--jdp-on-accent) !important;
+  background: var(--jdp-accent) !important;
+  border-color: transparent !important;
+}
+/* One quiet line: counts above the dots, months below, details on hover. */
+.jdp-timeline h4 .jdp-chip {
+  max-width: 45%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.jdp-tl {
+  position: relative;
+  height: 64px;
+  margin: 0 6px;
+}
+.jdp-tl-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 30px;
+  height: 3px;
+  border-radius: var(--jdp-radius-pill);
+  background: color-mix(in srgb, var(--jdp-accent) 30%, transparent);
+}
+.jdp-tl-today,
+.jdp-tl-month {
+  position: absolute;
+  top: 42px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--jdp-faint);
+}
+.jdp-tl-today {
+  left: 0;
+  color: var(--jdp-accent);
+}
+.jdp-tl-month {
+  transform: translateX(-50%);
+}
+.jdp-tl-event {
+  position: absolute;
+  top: 0;
+  width: 0;
+  height: 40px;
+  outline: none;
+}
+.jdp-tl-count {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translateX(-50%);
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--jdp-accent);
+  white-space: nowrap;
+}
+.jdp-tl-dot {
+  position: absolute;
+  left: -7px;
+  top: 24px;
+  width: 14px;
+  height: 14px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  background: var(--jdp-elevated);
+  border: 3px solid var(--jdp-accent);
+  transition: transform 0.15s;
+}
+.jdp-soon .jdp-tl-count {
+  color: color-mix(in srgb, var(--jdp-sun) 70%, var(--jdp-fg));
+}
+.jdp-soon .jdp-tl-dot {
+  border-color: var(--jdp-sun);
+  background: var(--jdp-sun);
+}
+.jdp-tl-event:hover .jdp-tl-dot,
+.jdp-tl-event:focus-visible .jdp-tl-dot {
+  transform: scale(1.25);
+}
+.jdp-tl-linked {
+  cursor: pointer;
+}
+/* Hover/focus details */
+.jdp-tl-pop {
+  position: absolute;
+  z-index: 20;
+  bottom: 22px;
+  left: 0;
+  transform: translateX(-50%);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 9rem;
+  max-width: 14rem;
+  padding: 9px 12px;
+  text-align: center;
+  background: var(--jdp-elevated);
+  border: 2px solid var(--jdp-border);
+  border-radius: var(--jdp-radius);
+  box-shadow: var(--jdp-shadow);
+}
+.jdp-tl-event:hover .jdp-tl-pop,
+.jdp-tl-event:focus-within .jdp-tl-pop {
+  display: flex;
+}
+.jdp-tl-event:hover .jdp-tl-count,
+.jdp-tl-event:focus-within .jdp-tl-count {
+  visibility: hidden;
+}
+.jdp-tl-pop b {
+  font-size: 13.5px;
+  font-weight: 800;
+}
+.jdp-tl-pop span {
+  font-size: 12px;
+  color: var(--jdp-subtle);
+  white-space: nowrap;
+}
+.jdp-tl-pop .jdp-tl-pop-deck {
+  color: var(--jdp-accent);
+  font-weight: 700;
+}
+html.jdp .jdp-tl-del {
+  margin-top: 4px;
+  padding: 1px 10px !important;
+  font-size: 11px;
+  color: var(--jdp-subtle) !important;
+  background: transparent !important;
+  border-color: var(--jdp-border) !important;
+  box-shadow: none !important;
+}
+html.jdp .jdp-tl-del:hover {
+  color: var(--jdp-learn) !important;
+  border-color: var(--jdp-learn) !important;
+}
+.jdp-check-big {
+  width: 44px;
+  height: 44px;
+  color: var(--jdp-review);
 }

@@ -214,3 +214,144 @@ def deck_progress(col) -> dict[int, tuple[int, int]]:
     for top in col.sched.deck_due_tree().children:
         walk(top)
     return out
+
+
+def minutes_by_day(col, days: int) -> list[float]:
+    """Minutes studied per day for the last `days` days (last = today)."""
+    cutoff = col.sched.day_cutoff
+    since = cutoff - days * DAY
+    out = [0.0] * days
+    for idx, ms in col.db.all(
+        "select (id / 1000 - ?) / ?, sum(min(time, ?)) from revlog "
+        "where id >= ? and id < ? group by 1",
+        since,
+        DAY,
+        MAX_ANSWER_SECONDS * 1000,
+        since * 1000,
+        cutoff * 1000,
+    ):
+        if 0 <= idx < days:
+            out[int(idx)] = (ms or 0) / 60000
+    return out
+
+
+@dataclass
+class WeakSpot:
+    did: int
+    name: str  # full deck name, e.g. "MCAT::1 Bio-Biochem::Enzymes"
+    retention: float
+    reviews: int
+
+
+def weak_spots(
+    col, days: int = 30, min_reviews: int = 15, limit: int = 3
+) -> list[WeakSpot]:
+    """Decks (by the deck each card lives in) with the lowest recall on
+    reviews over the last `days` days."""
+    since_ms = _day_start(col, days - 1) * 1000
+    rows = col.db.all(
+        "select case when c.odid then c.odid else c.did end, count(), "
+        "avg(r.ease > 1) from revlog r join cards c on c.id = r.cid "
+        "where r.id >= ? and r.type = 1 group by 1 having count() >= ?",
+        since_ms,
+        min_reviews,
+    )
+    spots = []
+    for did, n, acc in rows:
+        deck = col.decks.get(did, default=False)
+        if deck:
+            spots.append(WeakSpot(did, deck["name"], acc, n))
+    spots.sort(key=lambda w: (w.retention, -w.reviews))
+    return spots[:limit]
+
+
+@dataclass
+class Backlog:
+    overdue: int
+    extra_per_day: int
+    days_to_clear: int
+
+
+def backlog(col) -> Backlog:
+    """Overdue reviews and a gentle catch-up plan: an extra quarter of her
+    usual daily reviews (at least 10) on top of what's due anyway."""
+    today = col.sched.today
+    overdue = col.db.scalar(
+        "select count() from cards where queue in (2, 3) and due < ?", today
+    )
+    recent = daily_counts(col, 14)
+    typical = sum(recent) / max(1, sum(1 for c in recent if c))
+    extra = max(10, round(typical * 0.25))
+    days = -(-overdue // extra) if overdue else 0
+    return Backlog(overdue, extra, days)
+
+
+@dataclass
+class FinishLine:
+    did: int
+    name: str
+    unseen: int
+    total: int
+    per_day: float  # new cards introduced per day, last 14 days
+    days_left: int | None  # None when she isn't adding new cards
+
+
+def finish_lines(col, window: int = 14) -> list[FinishLine]:
+    """For each top-level deck with unseen cards: when, at her recent pace
+    of new cards, she will have seen every card."""
+    since_ms = _day_start(col, window - 1) * 1000
+    out = []
+    for node in col.sched.deck_due_tree().children:
+        dids = [node.deck_id] + [d for _, d in col.decks.children(node.deck_id)]
+        ids = ",".join(str(d) for d in dids)
+        unseen = col.db.scalar(
+            f"select count() from cards where queue = 0 and did in ({ids})"
+        )
+        if not unseen:
+            continue
+        total = col.db.scalar(f"select count() from cards where did in ({ids})")
+        introduced = col.db.scalar(
+            "select count() from (select r.cid, min(r.id) first from revlog r "
+            f"join cards c on c.id = r.cid where c.did in ({ids}) "
+            "group by r.cid) where first >= ?",
+            since_ms,
+        )
+        per_day = introduced / window
+        days = -(-unseen // per_day) if per_day > 0 else None
+        out.append(
+            FinishLine(node.deck_id, node.name, unseen, total, per_day, days)
+        )
+    return out
+
+
+@dataclass
+class NewCardCost:
+    reviews_first_month: float  # answers a new card needs in its first 30 days
+    seconds_each: float
+
+    def minutes_per_day(self, new_cards: int) -> float:
+        """Extra daily study time, averaged over the next month."""
+        return (
+            new_cards * self.reviews_first_month * self.seconds_each / 30 / 60
+        )
+
+
+def new_card_cost(col) -> NewCardCost | None:
+    """From cards she introduced 30-120 days ago: how many answers each
+    needed in its first month."""
+    cutoff = col.sched.day_cutoff
+    lo, hi = (cutoff - 120 * DAY) * 1000, (cutoff - 30 * DAY) * 1000
+    row = col.db.first(
+        "select count(), sum(n) from (select f.cid, ("
+        "  select count() from revlog r where r.cid = f.cid "
+        "  and r.id < f.first + ?) n "
+        "from (select cid, min(id) first from revlog group by cid) f "
+        "where f.first >= ? and f.first < ?)",
+        30 * DAY * 1000,
+        lo,
+        hi,
+    )
+    cards, answers = row
+    if not cards or cards < 10:
+        return None
+    return NewCardCost(answers / cards, pace(col).seconds_per_answer)
