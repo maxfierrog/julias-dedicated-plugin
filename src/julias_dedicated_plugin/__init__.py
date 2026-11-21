@@ -56,10 +56,40 @@ def _on_overview(overview, content) -> None:
 
 
 def study_deck(did: int) -> None:
-    """Start reviewing a deck directly, skipping its overview screen."""
+    """Start reviewing a deck directly, skipping its overview screen. With
+    nothing due, show the overview instead (Anki's congratulations screen,
+    with custom study), rather than an empty review."""
     mw.col.decks.select(did)
-    mw.col.startTimebox()
-    mw.moveToState("review")
+    if sum(mw.col.sched.counts()):
+        mw.col.startTimebox()
+        mw.moveToState("review")
+    else:
+        mw.moveToState("overview")
+
+
+@_guard
+def _on_deck_options_menu(menu, did: int) -> None:
+    """The deck's gear menu gains the actions that used to live only on its
+    overview screen (which clicking a deck now skips)."""
+    if not web.settings()["modules"]["theme"]:
+        return
+
+    def custom_study():
+        import aqt.customstudy
+
+        mw.col.decks.select(did)
+        aqt.customstudy.CustomStudy.fetch_data_and_show(mw)
+
+    def description():
+        from aqt.deckdescription import DeckDescriptionDialog
+
+        mw.col.decks.select(did)
+        DeckDescriptionDialog(mw)
+
+    menu.addSeparator()
+    menu.addAction("Custom study…").triggered.connect(custom_study)
+    if not mw.col.decks.get(did)["dyn"]:
+        menu.addAction("Description…").triggered.connect(description)
 
 
 # --- Session display ------------------------------------------------------
@@ -254,6 +284,7 @@ gui_hooks.webview_did_inject_style_into_page.append(
 )
 gui_hooks.deck_browser_will_render_content.append(_on_deck_browser)
 gui_hooks.overview_will_render_content.append(_on_overview)
+gui_hooks.deck_browser_will_show_options_menu.append(_on_deck_options_menu)
 gui_hooks.state_did_change.append(_on_state_change)
 gui_hooks.reviewer_did_answer_card.append(_on_answer)
 gui_hooks.reviewer_did_show_question.append(_on_show_question)

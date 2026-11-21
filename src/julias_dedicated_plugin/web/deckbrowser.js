@@ -38,7 +38,16 @@
 
     const stack = document.createElement("div");
     stack.className = "jdp-deckname";
-    if (name) stack.appendChild(name);
+    if (name) {
+      // Clicking a deck starts studying it (no overview screen in between).
+      name.onclick = (e) => {
+        e.preventDefault();
+        pycmd("jdp:study:" + row.id);
+        return false;
+      };
+      name.title = "Study this deck";
+      stack.appendChild(name);
+    }
     wrap.appendChild(stack);
 
     cell.replaceChildren(wrap);
