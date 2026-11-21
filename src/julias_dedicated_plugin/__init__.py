@@ -9,6 +9,7 @@ process: keep it to hook registration and do real work in the hooks.
 import datetime as dt
 import json
 import os
+import sys
 
 from aqt import gui_hooks, mw
 from aqt.qt import QEvent, QMenu, QObject, Qt, QTimer, QWidget
@@ -351,10 +352,17 @@ class _WindowWatcher(QObject):
 
 def _is_rounded_popup(obj) -> bool:
     # Tooltips are Qt's private QTipLabel (seen from Python as a QLabel), so
-    # check the C++ class name rather than the Python type.
-    return isinstance(obj, QMenu) or (
-        isinstance(obj, QObject) and obj.inherits("QTipLabel")
-    )
+    # check the C++ class name rather than the Python type. macOS only (on
+    # Linux without a compositor, translucent windows render black), and
+    # only with the theme on.
+    if sys.platform != "darwin":
+        return False
+    if not (
+        isinstance(obj, QMenu)
+        or (isinstance(obj, QObject) and obj.inherits("QTipLabel"))
+    ):
+        return False
+    return web.settings()["modules"]["theme"]
 
 
 _watcher = _WindowWatcher()
@@ -377,6 +385,7 @@ def _on_collection_loaded(col) -> None:
     mw.toolbar.draw()
 
 
+@_guard
 def _on_main_window_init() -> None:
     from . import zoom
     from .settings_dialog import add_menu_action
@@ -429,9 +438,15 @@ def _on_profile_will_close() -> None:
 
 
 def _on_sync_finished() -> None:
+    from . import qt_theme, zoom
     from .settings_dialog import reload_settings
 
+    # Settings may have changed on another computer: re-apply everything
+    # that isn't read live (native windows, title bars, focus mode, zoom).
     reload_settings()
+    qt_theme.apply(web.settings())
+    apply_focus_mode()
+    zoom.apply()
     web.refresh_live()
 
 

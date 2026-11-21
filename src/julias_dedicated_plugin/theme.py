@@ -243,6 +243,7 @@ DISPLAY_FONT = (
 
 UI_FONTS = {
     "rounded": '"Nunito Variable", "Inter Variable", -apple-system, sans-serif',
+    "playful": '"Quicksand Variable", "Nunito Variable", -apple-system, sans-serif',
     "inter": '"Inter Variable", -apple-system, "Segoe UI", sans-serif',
     "system": '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
 }
@@ -280,8 +281,14 @@ _anki_radius_tokens: dict[str, str] = {}
 
 
 def _palette_vars(
-    p: Palette, accent: str, dark: bool, on_accent: str, anki: bool
+    p: Palette,
+    accent: str,
+    dark: bool,
+    on_accent: str,
+    anki: bool,
+    primary: str = "",
 ) -> str:
+    primary = primary or accent
     shadow = (
         "0 1px 2px rgb(0 0 0 / 0.25), 0 4px 16px rgb(0 0 0 / 0.25)"
         if dark
@@ -306,9 +313,10 @@ def _palette_vars(
         "--button-gradient-start": p.elevated,
         "--button-gradient-end": p.elevated,
         "--button-hover-border": p.subtle,
-        "--button-primary-bg": accent,
-        "--button-primary-gradient-start": accent,
-        "--button-primary-gradient-end": accent,
+        # Anki draws white text on primary buttons: use the deeper accent.
+        "--button-primary-bg": primary,
+        "--button-primary-gradient-start": primary,
+        "--button-primary-gradient-end": primary,
         "--scrollbar-bg": p.border,
         "--scrollbar-bg-hover": p.faint,
         "--scrollbar-bg-active": p.subtle,
@@ -400,7 +408,9 @@ def tokens_css(settings: dict) -> str:
     # A lifted custom accent is a color-mix() expression we can't measure;
     # it is always light enough that dark text reads best on it.
     dark_on = "#16130F" if custom else _on_accent(preset.dark.accent)
-    dark_vars = _palette_vars(preset.dark, dark_accent, True, dark_on, anki)
+    dark_vars = _palette_vars(
+        preset.dark, dark_accent, True, dark_on, anki, primary=light_accent
+    )
     return f":root{{{shared}{light_vars}}}:root.night-mode{{{dark_vars}}}"
 
 
@@ -408,6 +418,8 @@ def html_classes(settings: dict) -> list[str]:
     """Classes for <html> (body classes are reset by Anki on every card)."""
     m, c, t = settings["modules"], settings["cards"], settings["theme"]
     classes = ["jdp", f"jdp-density-{t['density']}"]
+    if m["theme"]:
+        classes.append("jdp-theme")
     if m["session"]:
         classes.append("jdp-session")
     if m["cards"]:

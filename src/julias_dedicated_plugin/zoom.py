@@ -28,9 +28,11 @@ def apply(factor: float | None = None) -> None:
         mw.pm.profile[PROFILE_KEY] = factor
     for view in _views():
         view.setZoomFactor(factor)
-    # The bars size themselves to their content; re-measure after scaling.
-    mw.toolbarWeb.adjustHeightToFit()
-    mw.bottomWeb.adjustHeightToFit()
+    # The bars size themselves to their content; re-measure after scaling
+    # (but don't re-expand a bar Anki has auto-hidden).
+    for bar in (mw.toolbarWeb, mw.bottomWeb):
+        if not getattr(bar, "hidden", False):
+            bar.adjustHeightToFit()
 
 
 def _make_bars_zoom_aware() -> None:
@@ -42,9 +44,15 @@ def _make_bars_zoom_aware() -> None:
             continue
         view._jdp_zoom_aware = True
         on_height = view._onHeight  # bound original
-        view._onHeight = lambda q, f=on_height, v=view: f(
-            round(q * v.zoomFactor()) if q else q
-        )
+
+        def scaled(q, f=on_height, v=view):
+            f(round(q * v.zoomFactor()) if q else q)
+            # Anki also uses web_height to offset reviewer background images
+            # inside the (already zoomed) main view: keep it unscaled.
+            if q and hasattr(v, "web_height"):
+                v.web_height = int(q)
+
+        view._onHeight = scaled
         if hasattr(view, "animate_height"):
             animate = view.animate_height
             view.animate_height = lambda h, f=animate, v=view: f(

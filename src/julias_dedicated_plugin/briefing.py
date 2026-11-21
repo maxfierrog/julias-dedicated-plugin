@@ -49,7 +49,7 @@ def primary_deck(col) -> tuple[int, str, int] | None:
     Returns (deck id, name, cards due) or None if nothing is due."""
     nodes = [
         (n.deck_id, n.name, n.new_count + n.learn_count + n.review_count)
-        for n in col.sched.deck_due_tree().children
+        for n in stats.due_tree(col).children
     ]
     nodes = [n for n in nodes if n[2] > 0]
     if not nodes:
@@ -623,6 +623,25 @@ def _widget(wid: str, size: tuple[int, int], col, settings) -> str:
 
 
 def home_html(col, settings: dict, now: dt.datetime | None = None) -> str:
+    with stats.render_cache():
+        return _home_html(col, settings, now)
+
+
+def _catalog_shell(wid: str) -> str:
+    """A catalog entry for the "Add widget" picker: metadata only. Its real
+    content is rendered when she adds it (the page re-renders)."""
+    name, desc, sizes, _render = WIDGETS[wid]
+    cols, rows = sizes[0]
+    allowed = ",".join(f"{c}x{r}" for c, r in sizes)
+    return (
+        f"<div class='jdp-widget jdp-cols-{cols} jdp-rows-{rows}' data-id='{wid}' "
+        f"data-name='{html.escape(name)}' data-desc='{html.escape(desc)}' "
+        f"data-size='{cols}x{rows}' data-sizes='{allowed}' data-cols='{cols}' "
+        "data-shell='1'></div>"
+    )
+
+
+def _home_html(col, settings: dict, now: dt.datetime | None = None) -> str:
     b = settings["briefing"]
     now = now or dt.datetime.now()
     pace = stats.pace(col)
@@ -645,11 +664,7 @@ def home_html(col, settings: dict, now: dt.datetime | None = None) -> str:
             layout.append(parsed)
     grid = "".join(_widget(w, size, col, settings) for w, size in layout)
     # Every widget not on the grid, pre-rendered for the "Add widget" picker.
-    catalog = "".join(
-        _widget(w, WIDGETS[w][2][0], col, settings)
-        for w in WIDGETS
-        if w not in seen
-    )
+    catalog = "".join(_catalog_shell(w) for w in WIDGETS if w not in seen)
     return (
         f"<header class='jdp-hello'>{head}</header>"
         "<div class='jdp-insights'>"

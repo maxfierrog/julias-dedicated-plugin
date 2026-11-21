@@ -85,4 +85,9 @@ def restore_title_bar(widget) -> bool:
     window = ctypes.c_void_p(window)
     _send(None, window, "setTitlebarAppearsTransparent:", ctypes.c_bool(False))
     _send(None, window, "setTitleVisibility:", ctypes.c_long(0))
+    ns_color = _runtime().objc_getClass(b"NSColor")
+    native = _send(
+        ctypes.c_void_p, ctypes.c_void_p(ns_color), "windowBackgroundColor"
+    )
+    _send(None, window, "setBackgroundColor:", ctypes.c_void_p(native))
     return True

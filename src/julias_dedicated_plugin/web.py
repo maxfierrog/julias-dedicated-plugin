@@ -126,9 +126,9 @@ def on_webview_will_set_content(web_content: WebContent, context) -> None:
             )
         return
     s = settings()
-    web_content.css.append(url("fonts.css"))
-    if s["modules"]["theme"]:
-        web_content.css.append(url("theme.css"))
+    # Always loaded; gated by the jdp-theme class, so turning the theme on or
+    # off applies live, even to a screen that is already open.
+    web_content.css += [url("fonts.css"), url("theme.css")]
     web_content.head += _apply_script(s, ctx)
     if ctx == "deckbrowser" and s["modules"]["theme"]:
         web_content.js.append(url("deckbrowser.js"))
@@ -152,8 +152,15 @@ def apply_window_chrome() -> None:
     or restore the stock title bars when the theme is off."""
     from aqt.qt import QApplication
 
+    from aqt.qt import Qt
+
     for widget in QApplication.topLevelWidgets():
-        # The main window may not be shown yet when her collection loads.
+        # Real windows only (never menus or tooltips: an opaque background
+        # would give them square corners). The main window may not be shown
+        # yet when her collection loads.
+        kind = widget.windowType()
+        if kind not in (Qt.WindowType.Window, Qt.WindowType.Dialog):
+            continue
         if widget.isVisible() or widget is mw:
             style_window(widget)
 
@@ -164,9 +171,14 @@ def style_window(widget) -> None:
 
     from . import mac_window
 
-    if not widget.isWindow() or mw.col is None and widget is not mw:
-        return
     try:
+        from aqt.qt import sip
+
+        # Deferred styling can arrive after the window was already deleted.
+        if sip.isdeleted(widget) or not widget.isWindow():
+            return
+        if mw.col is None and widget is not mw:
+            return
         s = settings()
         if not s["modules"]["theme"]:
             mac_window.restore_title_bar(widget)

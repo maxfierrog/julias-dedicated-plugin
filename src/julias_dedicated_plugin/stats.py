@@ -5,7 +5,34 @@ Day boundaries follow Anki's: a day starts at the "next day starts at" hour
 (`col.sched.day_cutoff` is the end of today).
 """
 
+import contextlib
 from dataclasses import dataclass
+
+# Within one home-screen render, expensive shared inputs are computed once.
+_cache: dict | None = None
+
+
+@contextlib.contextmanager
+def render_cache():
+    global _cache
+    _cache = {}
+    try:
+        yield
+    finally:
+        _cache = None
+
+
+def _cached(key, compute):
+    if _cache is None:
+        return compute()
+    if key not in _cache:
+        _cache[key] = compute()
+    return _cache[key]
+
+
+def due_tree(col):
+    return _cached("due_tree", col.sched.deck_due_tree)
+
 
 DAY = 86_400
 # Revlog rows that are real answers (not Forget/Set due date/reschedule rows,
@@ -39,6 +66,10 @@ class Pace:
 
 
 def pace(col, days: int = 14) -> Pace:
+    return _cached(("pace", days), lambda: _pace(col, days))
+
+
+def _pace(col, days: int) -> Pace:
     since_ms = _day_start(col, days - 1) * 1000
     row = col.db.first(
         "select count(), avg(min(time, ?)) from revlog "
@@ -53,22 +84,23 @@ def pace(col, days: int = 14) -> Pace:
         else DEFAULT_SECONDS_PER_ANSWER
     )
 
-    # Answers a new card takes on the day it's introduced.
+    # Answers a new card takes on the day it's introduced: only cards with an
+    # answer in the window are considered, so this stays fast on big histories.
     per_new = col.db.scalar(
-        """
+        f"""
         select avg(n) from (
-          select count() n from revlog r
-          where r.id >= ? and r.type in (0, 1, 2, 3) and r.ease > 0 and r.id < (
-            select min(id) from revlog r2 where r2.cid = r.cid
-              and r2.type in (0, 1, 2, 3) and r2.ease > 0
-          ) + ? and r.cid in (
-            select cid from revlog where type in (0, 1, 2, 3) and ease > 0
-            group by cid having min(id) >= ?
-          )
-          group by r.cid
+          select (select count() from revlog r where r.cid = f.cid
+                  and r.id < f.first + ? and r.{ANSWER.replace(" and ", " and r.")}) n
+          from (
+            select cid, min(id) first from revlog
+            where cid in (select distinct cid from revlog where id >= ?)
+              and {ANSWER}
+            group by cid
+          ) f
+          where f.first >= ?
         )""",
-        since_ms,
         DAY * 1000 // 2,
+        since_ms,
         since_ms,
     )
     fail = col.db.scalar(
@@ -86,7 +118,7 @@ def queue_counts(col) -> tuple[int, int, int]:
     """(new, learn, review) for the whole collection today, respecting
     daily limits, as the deck list shows them."""
     new = learn = review = 0
-    for node in col.sched.deck_due_tree().children:
+    for node in due_tree(col).children:
         new += node.new_count
         learn += node.learn_count
         review += node.review_count
@@ -130,7 +162,23 @@ def retention(col, days: int = 30) -> Retention:
 
 
 def daily_counts(col, days: int) -> list[int]:
-    """Answers per day for the last `days` days, oldest first (last = today)."""
+    """Answers per day for the last `days` days, oldest first (last = today).
+    Within a render, one scan of her whole history serves every caller."""
+    if _cache is not None:
+        full = _cached(
+            "daily_full", lambda: _daily_counts(col, history_days(col))
+        )
+        if days <= len(full):
+            return full[-days:]
+    return _daily_counts(col, days)
+
+
+def history_days(col) -> int:
+    first = col.db.scalar("select min(id) from revlog") or 0
+    return max(1, (col.sched.day_cutoff - first // 1000) // DAY + 1)
+
+
+def _daily_counts(col, days: int) -> list[int]:
     cutoff = col.sched.day_cutoff
     since = cutoff - days * DAY
     out = [0] * days
@@ -158,8 +206,7 @@ class Streak:
 
 def streak(col, days: int | None = None) -> Streak:
     if days is None:  # all of her history, so a long-ago best isn't lost
-        first = col.db.scalar("select min(id) from revlog") or 0
-        days = max(1, (col.sched.day_cutoff - first // 1000) // DAY + 1)
+        days = history_days(col)
     counts = daily_counts(col, days)
     studied_today = counts[-1] > 0
     current = 0
@@ -229,7 +276,7 @@ def deck_progress(col) -> dict[int, tuple[int, int]]:
         out[node.deck_id] = (done, remaining)
         return done
 
-    for top in col.sched.deck_due_tree().children:
+    for top in due_tree(col).children:
         walk(top)
     return out
 
@@ -321,7 +368,7 @@ def finish_lines(col, window: int = 14) -> list[FinishLine]:
     of new cards, she will have seen every card."""
     since_ms = _day_start(col, window - 1) * 1000
     out = []
-    for node in col.sched.deck_due_tree().children:
+    for node in due_tree(col).children:
         dids = [node.deck_id] + [d for _, d in col.decks.children(node.deck_id)]
         ids = ",".join(str(d) for d in dids)
         unseen = col.db.scalar(

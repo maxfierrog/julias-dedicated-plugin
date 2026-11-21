@@ -124,7 +124,16 @@ def qss(settings: dict, dark: bool) -> str:
     # main screens since these controls are small and dense.
     r = round(int(settings["theme"]["radius"]) * 0.6)
     family = _qt_family(settings)
-    font = f'QWidget {{ font-family: "{family}"; }}' if family else ""
+    # Her font on UI chrome only: text editors (card template editor, debug
+    # console, config editor) keep their own, often monospace, fonts.
+    font = (
+        "QLabel, QPushButton, QToolButton, QCheckBox, QRadioButton, QComboBox, "
+        "QLineEdit, QSpinBox, QMenu, QMenuBar, QTabBar, QHeaderView, QTreeView, "
+        "QListView, QTableView, QGroupBox, QToolTip, QStatusBar "
+        f'{{ font-family: "{family}"; }}'
+        if family
+        else ""
+    )
     return font + f"""
 QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox, QDateEdit, QPlainTextEdit,
 QTextEdit {{
@@ -152,10 +161,6 @@ QPushButton:default, QPushButton:checked {{
 }}
 QPushButton:focus {{
     border-color: {accent};
-}}
-QCheckBox::indicator:checked, QRadioButton::indicator:checked {{
-    background: {accent};
-    border: 1px solid {accent};
 }}
 QHeaderView::section {{
     background: {p.canvas};

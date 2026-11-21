@@ -177,11 +177,10 @@
       $(".jdp-picker-size", b).textContent = sizeLabel(w);
       $(".jdp-picker-desc", b).textContent = w.dataset.desc;
       b.addEventListener("click", () => {
+        // Catalog entries are empty shells; re-render to get real content.
         grid().appendChild(w);
-        decorate(w);
         save();
-        renderPicker();
-        w.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        rerenderEditing();
       });
       list.appendChild(b);
     }

@@ -9,28 +9,28 @@
    - One navigation bar (top). Screen-specific actions live on the screen.
 
    Colors and sizes come from tokens (theme.py), in light and dark.
-   Screens are scoped with html.jdp-ctx-<name>. Anki redefines --canvas and
+   Screens are scoped with html.jdp-theme.jdp-ctx-<name>. Anki redefines --canvas and
    --fg inside <button>, so buttons use our --jdp-* tokens. */
 
-html.jdp body {
+html.jdp-theme body {
   font-family: var(--jdp-font-ui);
   font-weight: 500;
   -webkit-font-smoothing: antialiased;
   background: var(--jdp-canvas);
   color: var(--jdp-fg);
 }
-html.jdp ::selection {
+html.jdp-theme ::selection {
   background: color-mix(in srgb, var(--jdp-accent) 25%, transparent);
 }
-html.jdp h1,
-html.jdp h2,
-html.jdp h3,
-html.jdp h4 {
+html.jdp-theme h1,
+html.jdp-theme h2,
+html.jdp-theme h3,
+html.jdp-theme h4 {
   font-family: var(--jdp-font-display);
 }
 
 /* ---- Buttons ------------------------------------------------------------ */
-html.jdp button {
+html.jdp-theme button {
   font-family: var(--jdp-font-display) !important;
   font-size: 13.5px;
   font-weight: 700;
@@ -44,35 +44,35 @@ html.jdp button {
     background 0.2s, filter 0.2s;
   cursor: pointer;
 }
-html.jdp button:hover {
+html.jdp-theme button:hover {
   border-color: var(--jdp-subtle) !important;
 }
-html.jdp button:active {
+html.jdp-theme button:active {
   transform: translateY(1px);
   box-shadow: 0 0 0 var(--jdp-border) !important;
 }
-html.jdp button:focus-visible {
+html.jdp-theme button:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--jdp-accent) 45%, transparent);
   outline-offset: 2px;
 }
-html.jdp button.jdp-primary,
-html.jdp #study {
+html.jdp-theme button.jdp-primary,
+html.jdp-theme #study {
   color: var(--jdp-on-accent) !important;
   background: var(--jdp-accent) !important;
   border-color: transparent !important;
   box-shadow: 0 3px 0 color-mix(in srgb, var(--jdp-accent) 60%, black) !important;
 }
-html.jdp button.jdp-primary:hover,
-html.jdp #study:hover {
+html.jdp-theme button.jdp-primary:hover,
+html.jdp-theme #study:hover {
   filter: brightness(1.06);
 }
-html.jdp button.jdp-primary:active,
-html.jdp #study:active {
+html.jdp-theme button.jdp-primary:active,
+html.jdp-theme #study:active {
   transform: translateY(2px);
   box-shadow: 0 1px 0 color-mix(in srgb, var(--jdp-accent) 60%, black) !important;
 }
 /* Quiet text-style actions (screen-specific, secondary) */
-html.jdp button.jdp-link {
+html.jdp-theme button.jdp-link {
   padding: 4px 12px !important;
   font-size: 13px;
   color: var(--jdp-subtle) !important;
@@ -80,25 +80,25 @@ html.jdp button.jdp-link {
   border-color: transparent !important;
   box-shadow: none !important;
 }
-html.jdp button.jdp-link {
+html.jdp-theme button.jdp-link {
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
-html.jdp button.jdp-link .jdp-ico {
+html.jdp-theme button.jdp-link .jdp-ico {
   width: 15px;
   height: 15px;
 }
-html.jdp button.jdp-link:hover {
+html.jdp-theme button.jdp-link:hover {
   color: var(--jdp-accent) !important;
   background: color-mix(in srgb, var(--jdp-accent) 10%, transparent) !important;
 }
 
 /* ---- Top toolbar (the one navigation bar) ------------------------------ */
-html.jdp-ctx-toolbar .header {
+html.jdp-theme.jdp-ctx-toolbar .header {
   padding: 8px 0 2px;
 }
-html.jdp-ctx-toolbar .toolbar {
+html.jdp-theme.jdp-ctx-toolbar .toolbar {
   display: inline-flex;
   gap: 2px;
   padding: 4px;
@@ -106,7 +106,7 @@ html.jdp-ctx-toolbar .toolbar {
   background: var(--jdp-elevated);
   border: 2px solid var(--jdp-border-subtle);
 }
-html.jdp-ctx-toolbar .hitem {
+html.jdp-theme.jdp-ctx-toolbar .hitem {
   font-family: var(--jdp-font-display);
   font-size: 13.5px;
   font-weight: 700;
@@ -116,10 +116,10 @@ html.jdp-ctx-toolbar .hitem {
   text-decoration: none;
   transition: background 0.2s, color 0.2s;
 }
-html.jdp-ctx-toolbar .hitem:not(:hover) {
+html.jdp-theme.jdp-ctx-toolbar .hitem:not(:hover) {
   background: transparent !important;
 }
-html.jdp-ctx-toolbar .hitem:hover {
+html.jdp-theme.jdp-ctx-toolbar .hitem:hover {
   color: var(--jdp-accent) !important;
   background: color-mix(in srgb, var(--jdp-accent) 12%, transparent) !important;
 }
@@ -127,34 +127,34 @@ html.jdp-ctx-toolbar .hitem:hover {
 /* ---- Bottom bars --------------------------------------------------------- */
 /* One navigation bar: Home and Overview show their own actions in-page, so
    their separate bottom bar renders empty and Anki sizes it to nothing. */
-html.jdp-ctx-bottombar,
-html.jdp-ctx-bottombar body {
+html.jdp-theme.jdp-ctx-bottombar,
+html.jdp-theme.jdp-ctx-bottombar body {
   margin: 0 !important;
   padding: 0 !important;
   height: 0 !important;
   overflow: hidden !important;
 }
-html.jdp-ctx-bottombar body > * {
+html.jdp-theme.jdp-ctx-bottombar body > * {
   display: none !important;
 }
-html.jdp-ctx-reviewer-bottom body {
+html.jdp-theme.jdp-ctx-reviewer-bottom body {
   background: var(--jdp-canvas);
   border-top: none !important;
   /* Room above for the shortcut badges, and a real gap below the buttons. */
   padding: 12px 0 18px !important;
 }
 /* Edit / More sit beside the answer buttons, not in the far corners. */
-html.jdp-ctx-reviewer-bottom #innertable {
+html.jdp-theme.jdp-ctx-reviewer-bottom #innertable {
   width: 100% !important;
   margin: 0 auto;
 }
 /* Always truly centered: the answer buttons (or Show Answer) sit in the
    exact middle whatever Edit / More measure; those hug them from the sides. */
-html.jdp-ctx-reviewer-bottom #innertable,
-html.jdp-ctx-reviewer-bottom #innertable > tbody {
+html.jdp-theme.jdp-ctx-reviewer-bottom #innertable,
+html.jdp-theme.jdp-ctx-reviewer-bottom #innertable > tbody {
   display: block;
 }
-html.jdp-ctx-reviewer-bottom #innertable > tbody > tr {
+html.jdp-theme.jdp-ctx-reviewer-bottom #innertable > tbody > tr {
   display: grid;
   /* minmax(0, 1fr): side columns stay equal even when Edit and More
      differ in width, so the middle never drifts. */
@@ -162,36 +162,36 @@ html.jdp-ctx-reviewer-bottom #innertable > tbody > tr {
   align-items: center;
   column-gap: 10px;
 }
-html.jdp-ctx-reviewer-bottom #innertable > tbody > tr > td {
+html.jdp-theme.jdp-ctx-reviewer-bottom #innertable > tbody > tr > td {
   display: block;
   width: auto !important;
 }
-html.jdp-ctx-reviewer-bottom #innertable > tbody > tr > td:first-child {
+html.jdp-theme.jdp-ctx-reviewer-bottom #innertable > tbody > tr > td:first-child {
   justify-self: end;
 }
-html.jdp-ctx-reviewer-bottom #innertable > tbody > tr > td:last-child {
+html.jdp-theme.jdp-ctx-reviewer-bottom #innertable > tbody > tr > td:last-child {
   justify-self: start;
 }
-html.jdp-ctx-reviewer-bottom #middle {
+html.jdp-theme.jdp-ctx-reviewer-bottom #middle {
   justify-self: center;
 }
-html.jdp-ctx-reviewer-bottom #middle > center > table,
-html.jdp-ctx-reviewer-bottom #middle table {
+html.jdp-theme.jdp-ctx-reviewer-bottom #middle > center > table,
+html.jdp-theme.jdp-ctx-reviewer-bottom #middle table {
   margin: 0 auto;
 }
 
 /* ---- Home ---------------------------------------------------------------- */
-html.jdp-ctx-deckbrowser body > center {
+html.jdp-theme.jdp-ctx-deckbrowser body > center {
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 0 20px 40px;
 }
-html.jdp-ctx-deckbrowser body > center > br,
-html.jdp-ctx-deckbrowser #studiedToday {
+html.jdp-theme.jdp-ctx-deckbrowser body > center > br,
+html.jdp-theme.jdp-ctx-deckbrowser #studiedToday {
   display: none;
 }
-html.jdp-ctx-deckbrowser .jdp-hello {
+html.jdp-theme.jdp-ctx-deckbrowser .jdp-hello {
   order: -1;
   position: relative;
   box-sizing: border-box;
@@ -233,17 +233,17 @@ html.night-mode .jdp-blob path {
   position: relative;
   z-index: 2;
 }
-html.jdp-ctx-deckbrowser .jdp-hello {
+html.jdp-theme.jdp-ctx-deckbrowser .jdp-hello {
   z-index: 0;
 }
-html.jdp-ctx-deckbrowser body > center > table,
-html.jdp-ctx-deckbrowser .jdp-insights,
-html.jdp-ctx-deckbrowser .jdp-deck-actions {
+html.jdp-theme.jdp-ctx-deckbrowser body > center > table,
+html.jdp-theme.jdp-ctx-deckbrowser .jdp-insights,
+html.jdp-theme.jdp-ctx-deckbrowser .jdp-deck-actions {
   position: relative;
   z-index: 1;
 }
 
-html.jdp-ctx-deckbrowser .jdp-hello h1 {
+html.jdp-theme.jdp-ctx-deckbrowser .jdp-hello h1 {
   margin: 0 0 4px;
   font-size: 34px;
   font-weight: 700;
@@ -263,12 +263,12 @@ html.jdp-ctx-deckbrowser .jdp-hello h1 {
   0%, 100% { transform: rotate(0) scale(1); }
   50% { transform: rotate(14deg) scale(1.12); }
 }
-html.jdp-ctx-deckbrowser .jdp-summary {
+html.jdp-theme.jdp-ctx-deckbrowser .jdp-summary {
   margin: 0;
   font-size: 16px;
   color: var(--jdp-subtle);
 }
-html.jdp-ctx-deckbrowser .jdp-summary b {
+html.jdp-theme.jdp-ctx-deckbrowser .jdp-summary b {
   color: var(--jdp-fg);
   font-weight: 800;
 }
@@ -281,21 +281,21 @@ html.jdp-ctx-deckbrowser .jdp-summary b {
   gap: 10px;
   flex: none;
 }
-html.jdp button.jdp-cta {
+html.jdp-theme button.jdp-cta {
   display: inline-flex;
   align-items: center;
   gap: 10px;
   padding: 12px 14px 12px 24px !important;
   font-size: 16px;
 }
-html.jdp button.jdp-cta small {
+html.jdp-theme button.jdp-cta small {
   min-width: 22px;
   padding: 2px 8px;
   border-radius: var(--jdp-radius-pill);
   font-size: 13px;
   background: color-mix(in srgb, var(--jdp-on-accent) 22%, transparent);
 }
-html.jdp button.jdp-icon {
+html.jdp-theme button.jdp-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -304,12 +304,12 @@ html.jdp button.jdp-icon {
   padding: 0 !important;
   color: var(--jdp-subtle) !important;
 }
-html.jdp button.jdp-icon:hover {
+html.jdp-theme button.jdp-icon:hover {
   color: var(--jdp-accent) !important;
 }
 
 /* Deck list */
-html.jdp-ctx-deckbrowser body > center > table {
+html.jdp-theme.jdp-ctx-deckbrowser body > center > table {
   box-sizing: border-box;
   width: min(46rem, 100%);
   border-collapse: separate;
@@ -320,17 +320,17 @@ html.jdp-ctx-deckbrowser body > center > table {
   border-radius: calc(var(--jdp-radius) + 6px);
   box-shadow: var(--jdp-shadow);
 }
-html.jdp-ctx-deckbrowser th {
+html.jdp-theme.jdp-ctx-deckbrowser th {
   font-family: var(--jdp-font-display);
   font-size: 13px;
   font-weight: 700;
   color: var(--jdp-faint);
   padding: 8px 12px 6px;
 }
-html.jdp-ctx-deckbrowser th.count {
+html.jdp-theme.jdp-ctx-deckbrowser th.count {
   text-align: center;
 }
-html.jdp-ctx-deckbrowser .top-level-drag-row td {
+html.jdp-theme.jdp-ctx-deckbrowser .top-level-drag-row td {
   height: 2px;
   padding: 0;
   font-size: 1px;
@@ -338,34 +338,34 @@ html.jdp-ctx-deckbrowser .top-level-drag-row td {
 }
 /* Every row is a pill, so the selected and hovered highlights share one
    shape (Anki's own selected-row background is square). */
-html.jdp-ctx-deckbrowser tr.deck td {
+html.jdp-theme.jdp-ctx-deckbrowser tr.deck td {
   padding: calc(8px * var(--jdp-space)) 12px;
   background: transparent !important;
   transition: background 0.2s;
 }
-html.jdp-ctx-deckbrowser tr.deck td:first-child {
+html.jdp-theme.jdp-ctx-deckbrowser tr.deck td:first-child {
   border-radius: var(--jdp-radius-pill) 0 0 var(--jdp-radius-pill);
 }
-html.jdp-ctx-deckbrowser tr.deck td:last-child {
+html.jdp-theme.jdp-ctx-deckbrowser tr.deck td:last-child {
   border-radius: 0 var(--jdp-radius-pill) var(--jdp-radius-pill) 0;
 }
-html.jdp-ctx-deckbrowser tr.deck.current td {
+html.jdp-theme.jdp-ctx-deckbrowser tr.deck.current td {
   background: color-mix(in srgb, var(--jdp-accent) 7%, transparent) !important;
 }
-html.jdp-ctx-deckbrowser tr.deck:hover td {
+html.jdp-theme.jdp-ctx-deckbrowser tr.deck:hover td {
   background: color-mix(in srgb, var(--jdp-accent) 12%, transparent) !important;
 }
-html.jdp-ctx-deckbrowser a.deck {
+html.jdp-theme.jdp-ctx-deckbrowser a.deck {
   color: var(--jdp-fg) !important;
   font-size: 15px;
   font-weight: 700;
   text-decoration: none;
 }
-html.jdp-ctx-deckbrowser tr.current a.deck {
+html.jdp-theme.jdp-ctx-deckbrowser tr.current a.deck {
   color: var(--jdp-accent) !important;
 }
 /* Each deck cell: [indent][chevron][name + today's progress], centered. */
-html.jdp-ctx-deckbrowser tr.deck td {
+html.jdp-theme.jdp-ctx-deckbrowser tr.deck td {
   vertical-align: middle;
 }
 .jdp-deckcell {
@@ -376,7 +376,7 @@ html.jdp-ctx-deckbrowser tr.deck td {
 .jdp-deckname {
   min-width: 0;
 }
-html.jdp-ctx-deckbrowser .jdp-chevron {
+html.jdp-theme.jdp-ctx-deckbrowser .jdp-chevron {
   flex: none;
   display: inline-flex;
   align-items: center;
@@ -389,26 +389,26 @@ html.jdp-ctx-deckbrowser .jdp-chevron {
   text-decoration: none;
   transition: background 0.15s, color 0.15s;
 }
-html.jdp-ctx-deckbrowser .jdp-chevron svg {
+html.jdp-theme.jdp-ctx-deckbrowser .jdp-chevron svg {
   transition: transform 0.2s ease;
 }
-html.jdp-ctx-deckbrowser .jdp-chevron.jdp-open svg {
+html.jdp-theme.jdp-ctx-deckbrowser .jdp-chevron.jdp-open svg {
   transform: rotate(90deg);
 }
-html.jdp-ctx-deckbrowser a.jdp-chevron:hover {
+html.jdp-theme.jdp-ctx-deckbrowser a.jdp-chevron:hover {
   color: var(--jdp-accent) !important;
   background: color-mix(in srgb, var(--jdp-accent) 14%, transparent);
 }
-html.jdp-ctx-deckbrowser .jdp-chevron.jdp-spacer {
+html.jdp-theme.jdp-ctx-deckbrowser .jdp-chevron.jdp-spacer {
   background: transparent;
 }
-html.jdp-ctx-deckbrowser td[align="end"] {
+html.jdp-theme.jdp-ctx-deckbrowser td[align="end"] {
   text-align: center;
 }
-html.jdp-ctx-deckbrowser .new-count,
-html.jdp-ctx-deckbrowser .learn-count,
-html.jdp-ctx-deckbrowser .review-count,
-html.jdp-ctx-deckbrowser .zero-count {
+html.jdp-theme.jdp-ctx-deckbrowser .new-count,
+html.jdp-theme.jdp-ctx-deckbrowser .learn-count,
+html.jdp-theme.jdp-ctx-deckbrowser .review-count,
+html.jdp-theme.jdp-ctx-deckbrowser .zero-count {
   display: inline-block;
   min-width: 2.4em;
   padding: 2px 8px;
@@ -419,39 +419,39 @@ html.jdp-ctx-deckbrowser .zero-count {
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
-html.jdp-ctx-deckbrowser .new-count {
+html.jdp-theme.jdp-ctx-deckbrowser .new-count {
   color: var(--jdp-new);
   background: color-mix(in srgb, var(--jdp-new) 14%, transparent);
 }
-html.jdp-ctx-deckbrowser .learn-count {
+html.jdp-theme.jdp-ctx-deckbrowser .learn-count {
   color: var(--jdp-learn);
   background: color-mix(in srgb, var(--jdp-learn) 14%, transparent);
 }
-html.jdp-ctx-deckbrowser .review-count {
+html.jdp-theme.jdp-ctx-deckbrowser .review-count {
   color: var(--jdp-review);
   background: color-mix(in srgb, var(--jdp-review) 14%, transparent);
 }
-html.jdp-ctx-deckbrowser .zero-count {
+html.jdp-theme.jdp-ctx-deckbrowser .zero-count {
   color: var(--jdp-faint);
   font-weight: 600;
 }
-html.jdp-ctx-deckbrowser td.opts a {
+html.jdp-theme.jdp-ctx-deckbrowser td.opts a {
   display: flex;
   justify-content: center;
   align-items: center;
 }
-html.jdp-ctx-deckbrowser .gears {
+html.jdp-theme.jdp-ctx-deckbrowser .gears {
   /* Anki pads the icon's top, which drops the glyph below center. */
   padding: 0 !important;
   opacity: 0;
   transition: opacity 0.2s;
 }
-html.jdp-ctx-deckbrowser tr.deck:hover .gears {
+html.jdp-theme.jdp-ctx-deckbrowser tr.deck:hover .gears {
   opacity: 0.5;
 }
 /* "Today" column: a fixed-size progress ring per started deck. */
-html.jdp-ctx-deckbrowser th.jdp-today-col,
-html.jdp-ctx-deckbrowser td.jdp-today-cell {
+html.jdp-theme.jdp-ctx-deckbrowser th.jdp-today-col,
+html.jdp-theme.jdp-ctx-deckbrowser td.jdp-today-cell {
   width: 4.6rem;
   text-align: center;
 }
@@ -503,7 +503,7 @@ html.jdp-ctx-deckbrowser td.jdp-today-cell {
 }
 
 /* Tiles */
-html.jdp-ctx-deckbrowser .jdp-insights {
+html.jdp-theme.jdp-ctx-deckbrowser .jdp-insights {
   width: min(46rem, 100%);
   margin-top: calc(16px * var(--jdp-space));
   text-align: left;
@@ -689,22 +689,22 @@ html.night-mode .jdp-tile {
 }
 
 /* ---- Overview ----------------------------------------------------------- */
-html.jdp-ctx-overview body > center {
+html.jdp-theme.jdp-ctx-overview body > center {
   margin-top: calc(56px * var(--jdp-space));
 }
-html.jdp-ctx-overview h3 {
+html.jdp-theme.jdp-ctx-overview h3 {
   font-size: 32px;
   font-weight: 700;
   letter-spacing: -0.02em;
   margin: 0 0 18px;
 }
-html.jdp-ctx-overview .jdp-counts {
+html.jdp-theme.jdp-ctx-overview .jdp-counts {
   display: flex;
   gap: 12px;
   justify-content: center;
   margin: 0 0 26px;
 }
-html.jdp-ctx-overview .jdp-count {
+html.jdp-theme.jdp-ctx-overview .jdp-count {
   --tint: var(--jdp-new);
   min-width: 100px;
   padding: 14px 18px 12px;
@@ -716,44 +716,44 @@ html.jdp-ctx-overview .jdp-count {
   flex-direction: column;
   align-items: center;
 }
-html.jdp-ctx-overview .jdp-learn { --tint: var(--jdp-learn); }
-html.jdp-ctx-overview .jdp-review { --tint: var(--jdp-review); }
-html.jdp-ctx-overview .jdp-count b {
+html.jdp-theme.jdp-ctx-overview .jdp-learn { --tint: var(--jdp-learn); }
+html.jdp-theme.jdp-ctx-overview .jdp-review { --tint: var(--jdp-review); }
+html.jdp-theme.jdp-ctx-overview .jdp-count b {
   font-family: var(--jdp-font-display);
   font-size: 34px;
   font-weight: 700;
   color: var(--tint);
   font-variant-numeric: tabular-nums;
 }
-html.jdp-ctx-overview .jdp-count span {
+html.jdp-theme.jdp-ctx-overview .jdp-count span {
   font-family: var(--jdp-font-display);
   font-size: 13px;
   font-weight: 700;
   color: var(--jdp-subtle);
 }
-html.jdp-ctx-overview #study {
+html.jdp-theme.jdp-ctx-overview #study {
   font-size: 16px !important;
   padding: 12px 34px !important;
 }
-html.jdp-ctx-overview .jdp-eta {
+html.jdp-theme.jdp-ctx-overview .jdp-eta {
   margin-top: 12px;
   font-size: 13.5px;
   color: var(--jdp-subtle);
 }
-html.jdp-ctx-overview .jdp-secondary {
+html.jdp-theme.jdp-ctx-overview .jdp-secondary {
   display: flex;
   justify-content: center;
   gap: 4px;
   margin-top: 22px;
 }
-html.jdp-ctx-overview .description {
+html.jdp-theme.jdp-ctx-overview .description {
   max-width: 40rem;
   margin: 22px auto 0;
   color: var(--jdp-subtle);
 }
 
 /* ---- Reviewer bottom bar ---------------------------------------------- */
-html.jdp-ctx-reviewer-bottom #middle button {
+html.jdp-theme.jdp-ctx-reviewer-bottom #middle button {
   position: relative;
   min-width: 96px;
   margin: 0 5px;
@@ -765,7 +765,7 @@ html.jdp-ctx-reviewer-bottom #middle button {
   align-items: center;
   gap: 2px;
 }
-html.jdp-ctx-reviewer-bottom #middle button .nobold {
+html.jdp-theme.jdp-ctx-reviewer-bottom #middle button .nobold {
   position: static;
   transform: none;
   left: auto;
@@ -777,25 +777,25 @@ html.jdp-ctx-reviewer-bottom #middle button .nobold {
   opacity: 0.7;
   font-variant-numeric: tabular-nums;
 }
-html.jdp-ctx-reviewer-bottom #middle button[data-ease] {
+html.jdp-theme.jdp-ctx-reviewer-bottom #middle button[data-ease] {
   --tint: var(--jdp-subtle);
   color: color-mix(in srgb, var(--tint) 85%, var(--jdp-fg)) !important;
   background: color-mix(in srgb, var(--tint) 14%, var(--jdp-elevated)) !important;
   border-color: color-mix(in srgb, var(--tint) 30%, transparent) !important;
   box-shadow: 0 2px 0 color-mix(in srgb, var(--tint) 30%, transparent) !important;
 }
-html.jdp-ctx-reviewer-bottom #middle button[data-ease="1"] { --tint: var(--jdp-learn); }
-html.jdp-ctx-reviewer-bottom #middle button[data-ease="4"] { --tint: var(--jdp-review); }
-html.jdp-ctx-reviewer-bottom #middle button[data-ease="3"] {
+html.jdp-theme.jdp-ctx-reviewer-bottom #middle button[data-ease="1"] { --tint: var(--jdp-learn); }
+html.jdp-theme.jdp-ctx-reviewer-bottom #middle button[data-ease="4"] { --tint: var(--jdp-review); }
+html.jdp-theme.jdp-ctx-reviewer-bottom #middle button[data-ease="3"] {
   color: var(--jdp-on-accent) !important;
   background: var(--jdp-accent) !important;
   border-color: transparent !important;
   box-shadow: 0 3px 0 color-mix(in srgb, var(--jdp-accent) 60%, black) !important;
 }
-html.jdp-ctx-reviewer-bottom #middle button[data-ease]:hover {
+html.jdp-theme.jdp-ctx-reviewer-bottom #middle button[data-ease]:hover {
   filter: brightness(1.06);
 }
-html.jdp-ctx-reviewer-bottom #middle button[data-ease]::after {
+html.jdp-theme.jdp-ctx-reviewer-bottom #middle button[data-ease]::after {
   content: attr(data-ease);
   position: absolute;
   top: -8px;
@@ -811,7 +811,7 @@ html.jdp-ctx-reviewer-bottom #middle button[data-ease]::after {
   background: var(--jdp-canvas);
   border: 2px solid var(--jdp-border);
 }
-html.jdp-ctx-reviewer-bottom #middle #ansbut {
+html.jdp-theme.jdp-ctx-reviewer-bottom #middle #ansbut {
   min-width: 300px;
   padding: 10px 22px !important;
   font-size: 15px;
@@ -819,7 +819,7 @@ html.jdp-ctx-reviewer-bottom #middle #ansbut {
   justify-content: center;
   gap: 12px;
 }
-html.jdp-ctx-reviewer-bottom #ansbut .stattxt {
+html.jdp-theme.jdp-ctx-reviewer-bottom #ansbut .stattxt {
   position: static;
   transform: none;
   font-family: var(--jdp-font-display);
@@ -828,10 +828,10 @@ html.jdp-ctx-reviewer-bottom #ansbut .stattxt {
   opacity: 0.85;
   font-variant-numeric: tabular-nums;
 }
-html.jdp-ctx-reviewer-bottom .new-count { color: var(--jdp-new); }
-html.jdp-ctx-reviewer-bottom .learn-count { color: var(--jdp-learn); }
-html.jdp-ctx-reviewer-bottom .review-count { color: var(--jdp-review); }
-html.jdp-ctx-reviewer-bottom td.stat button {
+html.jdp-theme.jdp-ctx-reviewer-bottom .new-count { color: var(--jdp-new); }
+html.jdp-theme.jdp-ctx-reviewer-bottom .learn-count { color: var(--jdp-learn); }
+html.jdp-theme.jdp-ctx-reviewer-bottom .review-count { color: var(--jdp-review); }
+html.jdp-theme.jdp-ctx-reviewer-bottom td.stat button {
   padding: 7px 14px !important;
   font-size: 13.5px;
   background: transparent !important;
@@ -839,14 +839,14 @@ html.jdp-ctx-reviewer-bottom td.stat button {
   box-shadow: none !important;
   color: var(--jdp-subtle) !important;
 }
-html.jdp-ctx-reviewer-bottom td.stat button:hover {
+html.jdp-theme.jdp-ctx-reviewer-bottom td.stat button:hover {
   background: var(--jdp-inset) !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html.jdp *,
-  html.jdp *::before,
-  html.jdp *::after {
+  html.jdp-theme *,
+  html.jdp-theme *::before,
+  html.jdp-theme *::after {
     animation: none !important;
     transition: none !important;
   }
@@ -890,15 +890,15 @@ html.jdp-ctx-reviewer-bottom td.stat button:hover {
   justify-content: center;
   margin-top: calc(16px * var(--jdp-space));
 }
-html.jdp button.jdp-edit-toggle.jdp-primary {
+html.jdp-theme button.jdp-edit-toggle.jdp-primary {
   padding: 6px 18px !important;
 }
 
 /* Edit mode: dashed outlines, a remove badge, drag to reorder. */
-html.jdp-editing .jdp-grid > .jdp-widget {
+html.jdp-theme.jdp-editing .jdp-grid > .jdp-widget {
   cursor: grab;
 }
-html.jdp-editing .jdp-grid > .jdp-widget > .jdp-tile {
+html.jdp-theme.jdp-editing .jdp-grid > .jdp-widget > .jdp-tile {
   pointer-events: none;
   outline: 2px dashed color-mix(in srgb, var(--jdp-accent) 45%, transparent);
   outline-offset: 3px;
@@ -953,7 +953,7 @@ html.jdp-editing .jdp-grid > .jdp-widget > .jdp-tile {
   width: 16px;
   height: 2px;
 }
-html.jdp-editing .jdp-widget:hover .jdp-w-handle,
+html.jdp-theme.jdp-editing .jdp-widget:hover .jdp-w-handle,
 .jdp-widget.jdp-resizing .jdp-w-handle {
   opacity: 1;
 }
@@ -972,7 +972,7 @@ html.jdp-editing .jdp-widget:hover .jdp-w-handle,
   box-shadow: 0 4px 16px rgb(0 0 0 / 0.18);
   pointer-events: none;
 }
-html.jdp-editing .jdp-grid > .jdp-widget.jdp-resizing > .jdp-tile {
+html.jdp-theme.jdp-editing .jdp-grid > .jdp-widget.jdp-resizing > .jdp-tile {
   outline-style: solid;
 }
 /* Reordering: the slot stays as a placeholder; a lifted copy follows the
@@ -996,12 +996,12 @@ html.jdp-editing .jdp-grid > .jdp-widget.jdp-resizing > .jdp-tile {
 .jdp-ghost > .jdp-tile {
   outline: none !important;
 }
-html.jdp-reordering,
-html.jdp-reordering * {
+html.jdp-theme.jdp-reordering,
+html.jdp-theme.jdp-reordering * {
   cursor: grabbing !important;
   user-select: none;
 }
-html.jdp button.jdp-w-remove {
+html.jdp-theme button.jdp-w-remove {
   position: absolute;
   top: -9px;
   right: -9px;
@@ -1017,7 +1017,7 @@ html.jdp button.jdp-w-remove {
   border-radius: var(--jdp-radius-pill) !important;
   box-shadow: none !important;
 }
-html.jdp button.jdp-w-remove:hover {
+html.jdp-theme button.jdp-w-remove:hover {
   color: var(--jdp-learn) !important;
   border-color: var(--jdp-learn) !important;
 }
@@ -1037,7 +1037,7 @@ html.jdp button.jdp-w-remove:hover {
   grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
   gap: 10px;
 }
-html.jdp button.jdp-picker-item {
+html.jdp-theme button.jdp-picker-item {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 2px 8px;
@@ -1166,7 +1166,7 @@ html.jdp button.jdp-picker-item {
 .jdp-widget:hover .jdp-goal-adjust {
   opacity: 1;
 }
-html.jdp .jdp-goal-adjust button {
+html.jdp-theme .jdp-goal-adjust button {
   width: 24px;
   height: 24px;
   padding: 0 !important;
@@ -1176,8 +1176,8 @@ html.jdp .jdp-goal-adjust button {
 }
 
 /* ---- Timeline ------------------------------------------------------------ */
-html.jdp .jdp-tl-add,
-html.jdp .jdp-tl-cancel {
+html.jdp-theme .jdp-tl-add,
+html.jdp-theme .jdp-tl-cancel {
   padding: 3px 12px !important;
   font-size: 12.5px;
   color: var(--jdp-accent) !important;
@@ -1225,7 +1225,7 @@ html.jdp .jdp-tl-cancel {
 .jdp-tl-form input:focus {
   border-color: var(--jdp-accent);
 }
-html.jdp .jdp-tl-save {
+html.jdp-theme .jdp-tl-save {
   color: var(--jdp-on-accent) !important;
   background: var(--jdp-accent) !important;
   border-color: transparent !important;
@@ -1350,7 +1350,7 @@ html.jdp .jdp-tl-save {
   color: var(--jdp-accent);
   font-weight: 700;
 }
-html.jdp .jdp-tl-del {
+html.jdp-theme .jdp-tl-del {
   margin-top: 4px;
   padding: 1px 10px !important;
   font-size: 11px;
@@ -1359,7 +1359,7 @@ html.jdp .jdp-tl-del {
   border-color: var(--jdp-border) !important;
   box-shadow: none !important;
 }
-html.jdp .jdp-tl-del:hover {
+html.jdp-theme .jdp-tl-del:hover {
   color: var(--jdp-learn) !important;
   border-color: var(--jdp-learn) !important;
 }
@@ -1371,8 +1371,8 @@ html.jdp .jdp-tl-del:hover {
 
 /* Scrolling content fades out under the top toolbar instead of being cut
    along the edge of its (full-width) strip. */
-html.jdp-ctx-deckbrowser body::before,
-html.jdp-ctx-overview body::before {
+html.jdp-theme.jdp-ctx-deckbrowser body::before,
+html.jdp-theme.jdp-ctx-overview body::before {
   content: "";
   position: fixed;
   top: 0;
