@@ -125,6 +125,8 @@ def on_webview_will_set_content(web_content: WebContent, context) -> None:
     if s["modules"]["theme"]:
         web_content.css.append(url("theme.css"))
     web_content.head += _apply_script(s, ctx)
+    if ctx == "deckbrowser" and s["modules"]["theme"]:
+        web_content.js.append(url("deckbrowser.js"))
     if ctx == "reviewer":
         # Always loaded; html classes switch them on/off, so toggling a
         # module in settings applies live without reloading the reviewer.

@@ -139,6 +139,35 @@ html.jdp-ctx-reviewer-bottom #innertable {
   width: min(calc(var(--jdp-card-width) + 4rem), 100%) !important;
   margin: 0 auto;
 }
+/* Always truly centered: the answer buttons (or Show Answer) sit in the
+   exact middle whatever Edit / More measure; those hug them from the sides. */
+html.jdp-ctx-reviewer-bottom #innertable,
+html.jdp-ctx-reviewer-bottom #innertable > tbody {
+  display: block;
+}
+html.jdp-ctx-reviewer-bottom #innertable > tbody > tr {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  column-gap: 10px;
+}
+html.jdp-ctx-reviewer-bottom #innertable > tbody > tr > td {
+  display: block;
+  width: auto !important;
+}
+html.jdp-ctx-reviewer-bottom #innertable > tbody > tr > td:first-child {
+  justify-self: end;
+}
+html.jdp-ctx-reviewer-bottom #innertable > tbody > tr > td:last-child {
+  justify-self: start;
+}
+html.jdp-ctx-reviewer-bottom #middle {
+  justify-self: center;
+}
+html.jdp-ctx-reviewer-bottom #middle > center > table,
+html.jdp-ctx-reviewer-bottom #middle table {
+  margin: 0 auto;
+}
 
 /* ---- Home ---------------------------------------------------------------- */
 html.jdp-ctx-deckbrowser body > center {
@@ -324,19 +353,43 @@ html.jdp-ctx-deckbrowser a.deck {
 html.jdp-ctx-deckbrowser tr.current a.deck {
   color: var(--jdp-accent) !important;
 }
-html.jdp-ctx-deckbrowser a.collapse {
+/* Each deck cell: [indent][chevron][name + today's progress], centered. */
+html.jdp-ctx-deckbrowser tr.deck td {
+  vertical-align: middle;
+}
+.jdp-deckcell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.jdp-deckname {
+  min-width: 0;
+}
+html.jdp-ctx-deckbrowser .jdp-chevron {
+  flex: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
-  height: 18px;
-  margin-right: 6px;
+  width: 22px;
+  height: 22px;
   border-radius: var(--jdp-radius-pill);
-  font-size: 12px;
-  font-weight: 800;
-  text-decoration: none;
   color: var(--jdp-subtle) !important;
   background: var(--jdp-inset);
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+}
+html.jdp-ctx-deckbrowser .jdp-chevron svg {
+  transition: transform 0.2s ease;
+}
+html.jdp-ctx-deckbrowser .jdp-chevron.jdp-open svg {
+  transform: rotate(90deg);
+}
+html.jdp-ctx-deckbrowser a.jdp-chevron:hover {
+  color: var(--jdp-accent) !important;
+  background: color-mix(in srgb, var(--jdp-accent) 14%, transparent);
+}
+html.jdp-ctx-deckbrowser .jdp-chevron.jdp-spacer {
+  background: transparent;
 }
 html.jdp-ctx-deckbrowser td[align="end"] {
   text-align: center;
@@ -382,7 +435,7 @@ html.jdp-ctx-deckbrowser tr.deck:hover .gears {
 .jdp-deckbar {
   height: 3px;
   max-width: 9rem;
-  margin: 5px 0 1px 24px;
+  margin: 5px 0 1px;
   border-radius: var(--jdp-radius-pill);
   background: color-mix(in srgb, var(--jdp-fg) 8%, transparent);
   overflow: hidden;

@@ -246,27 +246,14 @@ def _link(cmd: str, label: str, key: str = "") -> str:
 
 
 def deck_progress_script(col) -> str:
-    """A thin line under each deck name showing today's progress for that
-    deck. Only for decks she has started today."""
+    """Today's progress per started deck, for web/deckbrowser.js to draw as
+    a thin line under each deck name."""
     data = {
         str(did): [done, rem]
         for did, (done, rem) in stats.deck_progress(col).items()
         if done
     }
-    return (
-        "<script>(function(){const p="
-        + json.dumps(data)
-        + ";function go(){document.querySelectorAll('tr.deck').forEach(r=>{"
-        "const d=p[r.id];const c=r.querySelector('td.decktd');"
-        "if(!d||!c||c.querySelector('.jdp-deckbar'))return;"
-        "const t=d[0]+d[1],b=document.createElement('div');"
-        "b.className='jdp-deckbar'+(d[1]===0?' jdp-done':'');"
-        "b.title=d[0]+' of '+t+' done today';"
-        "b.innerHTML='<i style=\"width:'+Math.round(100*d[0]/t)+'%\"></i>';"
-        "c.appendChild(b);});}"
-        "document.readyState==='loading'?"
-        "document.addEventListener('DOMContentLoaded',go):go();})();</script>"
-    )
+    return f"<script>window.JDP_DECK_PROGRESS = {json.dumps(data)};</script>"
 
 
 def deck_actions() -> str:
