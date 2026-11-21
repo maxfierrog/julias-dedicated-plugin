@@ -24,6 +24,7 @@ class Palette:
     new: str
     learn: str
     review: str
+    sun: str  # warm highlight for playful touches (streaks, doodles)
 
 
 @dataclass(frozen=True)
@@ -34,6 +35,173 @@ class Preset:
 
 
 PRESETS: dict[str, Preset] = {
+    # Soft periwinkle with a warm sunny highlight: the default.
+    "periwinkle": Preset(
+        "Periwinkle",
+        Palette(
+            "#F6F7FE",
+            "#FFFFFF",
+            "#ECEEFB",
+            "#1E2040",
+            "#63668A",
+            "#A2A5C4",
+            "#DDE0F5",
+            "#E8EAF9",
+            "#6C7FE0",
+            "#6C7FE0",
+            "#E0617A",
+            "#4FA37A",
+            "#F2B84B",
+        ),
+        Palette(
+            "#16172A",
+            "#1F2136",
+            "#121322",
+            "#E8E9F8",
+            "#A2A5C6",
+            "#6B6E92",
+            "#303352",
+            "#272A44",
+            "#9DABF5",
+            "#9DABF5",
+            "#F28DA0",
+            "#86D1AA",
+            "#FFCF6B",
+        ),
+    ),
+    # Warm cream and plum, tangerine accent.
+    "peach": Preset(
+        "Peach",
+        Palette(
+            "#FFF8F1",
+            "#FFFFFF",
+            "#FCEEE2",
+            "#2B1631",
+            "#7A6373",
+            "#B5A3AE",
+            "#F1DFD3",
+            "#F7E9DF",
+            "#E8613A",
+            "#4C8FD6",
+            "#E0533D",
+            "#5FA866",
+            "#F4B23E",
+        ),
+        Palette(
+            "#1F1620",
+            "#2A1F2B",
+            "#191219",
+            "#F6EBEF",
+            "#B9A6B3",
+            "#7C6A78",
+            "#3E3140",
+            "#332735",
+            "#FF8A63",
+            "#86B8F0",
+            "#FF8670",
+            "#8FD196",
+            "#FFC960",
+        ),
+    ),
+    "matcha": Preset(
+        "Matcha",
+        Palette(
+            "#F6FAF1",
+            "#FFFFFF",
+            "#EAF3E2",
+            "#1D2B1F",
+            "#64755F",
+            "#A2B19C",
+            "#DCE8D3",
+            "#E7F0E0",
+            "#4E9A5B",
+            "#4D86C9",
+            "#D9634C",
+            "#4E9A5B",
+            "#E9B949",
+        ),
+        Palette(
+            "#151C16",
+            "#1D261F",
+            "#111712",
+            "#E7F1E5",
+            "#9DB39A",
+            "#677A65",
+            "#2D3A2F",
+            "#253027",
+            "#8FD197",
+            "#8DBCEB",
+            "#F09A86",
+            "#8FD197",
+            "#F2CE6B",
+        ),
+    ),
+    "berry": Preset(
+        "Berry",
+        Palette(
+            "#FDF6FA",
+            "#FFFFFF",
+            "#F8E8F1",
+            "#2E1428",
+            "#7D6176",
+            "#B9A1B3",
+            "#F0DCE8",
+            "#F6E7EF",
+            "#C94F8B",
+            "#7C6BD6",
+            "#E0533D",
+            "#4F9E78",
+            "#F2B347",
+        ),
+        Palette(
+            "#1D141B",
+            "#281C25",
+            "#171016",
+            "#F6E9F1",
+            "#BBA2B4",
+            "#7E6679",
+            "#3E2E3A",
+            "#332631",
+            "#F28DBC",
+            "#B3A7F5",
+            "#FF8670",
+            "#86CFA8",
+            "#FFCA6A",
+        ),
+    ),
+    "sky": Preset(
+        "Sky",
+        Palette(
+            "#F4F8FD",
+            "#FFFFFF",
+            "#E7F0FA",
+            "#14243A",
+            "#5C6F86",
+            "#9DAEC2",
+            "#D8E4F2",
+            "#E4EDF7",
+            "#3D7FD9",
+            "#3D7FD9",
+            "#E0603F",
+            "#3E9C72",
+            "#F2B23E",
+        ),
+        Palette(
+            "#121925",
+            "#1A2331",
+            "#0E141E",
+            "#E6EEF8",
+            "#97A9C0",
+            "#62738B",
+            "#2A374A",
+            "#222D3D",
+            "#7FB2F5",
+            "#7FB2F5",
+            "#FF8F70",
+            "#7ED3AA",
+            "#FFCB63",
+        ),
+    ),
     "paper": Preset(
         "Paper",
         Palette(
@@ -49,6 +217,7 @@ PRESETS: dict[str, Preset] = {
             "#2F5DA8",
             "#C2543D",
             "#4E8A5A",
+            "#D9A441",
         ),
         Palette(
             "#1D1B18",
@@ -63,109 +232,23 @@ PRESETS: dict[str, Preset] = {
             "#8FB0EA",
             "#E58C76",
             "#8CC49A",
-        ),
-    ),
-    "sage": Preset(
-        "Sage",
-        Palette(
-            "#F2F4EF",
-            "#FCFDFB",
-            "#E9ECE5",
-            "#1F2620",
-            "#66705F",
-            "#9AA393",
-            "#DDE2D7",
-            "#E7EBE2",
-            "#4C7A57",
-            "#4F78A8",
-            "#C0604A",
-            "#4C7A57",
-        ),
-        Palette(
-            "#161A17",
-            "#1E2420",
-            "#121512",
-            "#E2E8E1",
-            "#98A394",
-            "#66705F",
-            "#2E362F",
-            "#252B26",
-            "#86B892",
-            "#8DB2DD",
-            "#E39580",
-            "#86B892",
-        ),
-    ),
-    "lilac": Preset(
-        "Lilac",
-        Palette(
-            "#F5F3F9",
-            "#FEFDFF",
-            "#ECE9F3",
-            "#24212E",
-            "#6E6880",
-            "#A19BB3",
-            "#E0DCEA",
-            "#EAE7F1",
-            "#6A55C9",
-            "#6A55C9",
-            "#C25563",
-            "#3F8A6B",
-        ),
-        Palette(
-            "#18161F",
-            "#211E2A",
-            "#13121A",
-            "#E9E6F2",
-            "#9F98B3",
-            "#6C6680",
-            "#322E3E",
-            "#282533",
-            "#A898F2",
-            "#A898F2",
-            "#EE8E9A",
-            "#7CC4A3",
-        ),
-    ),
-    "slate": Preset(
-        "Slate",
-        Palette(
-            "#F1F4F7",
-            "#FFFFFF",
-            "#E7ECF1",
-            "#1B2430",
-            "#5F6B7A",
-            "#97A2AF",
-            "#D9E0E8",
-            "#E5EAF0",
-            "#2F6FB5",
-            "#2F6FB5",
-            "#C4513F",
-            "#3D8B63",
-        ),
-        Palette(
-            "#12161B",
-            "#1A2027",
-            "#0E1115",
-            "#E4E9EF",
-            "#93A0AE",
-            "#5F6B7A",
-            "#29313B",
-            "#212830",
-            "#6FA8EA",
-            "#6FA8EA",
-            "#EE8A78",
-            "#74C29A",
+            "#E8C26E",
         ),
     ),
 }
 
+DISPLAY_FONT = (
+    '"Quicksand Variable", "Nunito Variable", -apple-system, sans-serif'
+)
+
 UI_FONTS = {
+    "rounded": '"Nunito Variable", "Inter Variable", -apple-system, sans-serif',
     "inter": '"Inter Variable", -apple-system, "Segoe UI", sans-serif',
     "system": '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
 }
 
 CARD_FONTS = {
+    "nunito": '"Nunito Variable", "Inter Variable", -apple-system, sans-serif',
     "atkinson": '"Atkinson Hyperlegible", "Inter Variable", -apple-system, sans-serif',
     "literata": '"Literata Variable", Georgia, "Times New Roman", serif',
     "inter": '"Inter Variable", -apple-system, "Segoe UI", sans-serif',
@@ -251,6 +334,7 @@ def _palette_vars(
         "--jdp-new": p.new,
         "--jdp-learn": p.learn,
         "--jdp-review": p.review,
+        "--jdp-sun": p.sun,
         "--jdp-shadow": shadow,
     }
     if anki:
@@ -261,7 +345,7 @@ def _palette_vars(
 def tokens_css(settings: dict) -> str:
     """CSS defining every theme token for light and dark mode."""
     t, c = settings["theme"], settings["cards"]
-    preset = PRESETS.get(t["preset"], PRESETS["paper"])
+    preset = PRESETS.get(t["preset"], PRESETS["periwinkle"])
     custom = t["accent"] if valid_hex(t["accent"]) else ""
     light_accent = custom or preset.light.accent
     # A custom accent is lifted toward white in dark mode to stay legible.
@@ -271,11 +355,13 @@ def tokens_css(settings: dict) -> str:
         else preset.dark.accent
     )
     anki = settings["modules"]["theme"]
-    radius = max(0, min(24, int(t["radius"])))
+    radius = max(0, min(28, int(t["radius"])))
     shared = "".join(
         f"{k}:{v};"
         for k, v in {
-            "--jdp-font-ui": UI_FONTS.get(t["ui_font"], UI_FONTS["inter"]),
+            "--jdp-font-ui": UI_FONTS.get(t["ui_font"], UI_FONTS["rounded"]),
+            "--jdp-font-display": DISPLAY_FONT,
+            "--jdp-bounce": "cubic-bezier(0.34, 1.56, 0.64, 1)",
             "--jdp-font-card": CARD_FONTS.get(
                 c["font"], CARD_FONTS["atkinson"]
             ),
@@ -314,3 +400,8 @@ def html_classes(settings: dict) -> list[str]:
         if c["override_colors"]:
             classes.append("jdp-card-colors")
     return classes
+
+
+def canvas_color(settings: dict, dark: bool) -> str:
+    preset = PRESETS.get(settings["theme"]["preset"], PRESETS["periwinkle"])
+    return (preset.dark if dark else preset.light).canvas

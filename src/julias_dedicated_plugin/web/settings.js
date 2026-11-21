@@ -17,7 +17,7 @@
   const CARD_FONTS = [
     ["atkinson", "Atkinson", '"Atkinson Hyperlegible"', "Built for legibility"],
     ["literata", "Literata", '"Literata Variable"', "Bookish serif"],
-    ["inter", "Inter", '"Inter Variable"', "Clean sans"],
+    ["nunito", "Nunito", '"Nunito Variable"', "Soft and round"],
     ["system", "System", "-apple-system, sans-serif", "Your Mac's font"],
   ];
 
@@ -220,21 +220,22 @@
   function render() {
     const app = document.getElementById("app");
     const scroll = document.scrollingElement.scrollTop;
-    const radiusLabel = (v) => (v <= 3 ? "Sharp" : v <= 9 ? "Soft" : v <= 15 ? "Round" : "Very round");
+    const radiusLabel = (v) => (v <= 4 ? "Crisp" : v <= 11 ? "Soft" : v <= 19 ? "Round" : "Bubbly");
     app.replaceChildren(
       h(
         "header",
         {},
-        h("h1", {}, "Customize"),
-        h("p", {}, "Changes apply right away. Everything here syncs with your collection."),
+        h("h1", {}, "Make it yours"),
+        h("p", {}, "Changes show up right away, and follow you to every computer you sync."),
       ),
       section(
         "Look",
         presets(),
         row("Accent color", null, accents(), true),
         row("Appearance", "Auto follows your Mac", segmented("anki.mode", [[0, "Auto"], [1, "Light"], [2, "Dark"]], data.mode)),
-        row("Corners", null, slider("theme.radius", 0, 20, 1, radiusLabel)),
+        row("Corners", null, slider("theme.radius", 0, 28, 1, radiusLabel)),
         row("Spacing", null, segmented("theme.density", [["compact", "Compact"], ["comfortable", "Comfortable"]])),
+        row("Interface font", null, segmented("theme.ui_font", [["rounded", "Rounded"], ["inter", "Crisp"], ["system", "System"]])),
       ),
       section(
         "Cards",

@@ -9,7 +9,7 @@ html.jdp-ctx-settings header {
 }
 html.jdp-ctx-settings h1 {
   margin: 0 0 4px;
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 700;
   letter-spacing: -0.02em;
 }
@@ -20,18 +20,17 @@ html.jdp-ctx-settings header p {
 }
 html.jdp-ctx-settings section {
   margin: 14px 16px 0;
-  padding: 6px 16px 10px;
-  background: var(--canvas-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--jdp-radius);
+  padding: 6px 18px 10px;
+  background: var(--jdp-elevated);
+  border: 2px solid var(--jdp-border-subtle);
+  border-radius: calc(var(--jdp-radius) + 6px);
+  box-shadow: 0 2px 0 var(--jdp-border-subtle);
 }
 html.jdp-ctx-settings h2 {
   margin: 12px 0 10px;
-  font-size: 11px;
-  font-weight: 650;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--fg-faint);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--jdp-accent);
 }
 .row {
   display: flex;
@@ -49,7 +48,7 @@ html.jdp-ctx-settings h2 {
   min-width: 0;
 }
 .label span {
-  font-weight: 550;
+  font-weight: 700;
 }
 .label small {
   font-size: 11.5px;

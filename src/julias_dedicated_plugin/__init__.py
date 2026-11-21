@@ -37,8 +37,10 @@ def _guard(fn):
 @_guard
 def _on_deck_browser(deck_browser, content) -> None:
     s = web.settings()
+    extra = briefing.deck_actions() if s["modules"]["theme"] else ""
     if s["modules"]["briefing"]:
-        content.stats = briefing.home_html(mw.col, s) + content.stats
+        extra += briefing.home_html(mw.col, s)
+    content.stats = extra + content.stats
 
 
 @_guard
@@ -134,32 +136,13 @@ def _on_js_message(handled, message: str, context):
     return (True, None)
 
 
-# --- Toolbar ------------------------------------------------------------------
-
-
-def _on_toolbar_links(links: list[str], toolbar) -> None:
-    def open_settings():
-        from .settings_dialog import open_settings as show
-
-        show()
-
-    links.append(
-        toolbar.create_link(
-            "jdp-settings",
-            "Customize",
-            open_settings,
-            tip="Julia's Dedicated Plugin settings",
-            id="jdp-settings",
-        )
-    )
-
-
 # --- Startup ----------------------------------------------------------------
 
 
 @_guard
 def _on_collection_loaded(col) -> None:
     apply_focus_mode()
+    web.apply_window_chrome()
     # The toolbar was first drawn before her settings were readable.
     mw.toolbar.draw()
 
@@ -181,6 +164,6 @@ gui_hooks.overview_will_render_content.append(_on_overview)
 gui_hooks.state_did_change.append(_on_state_change)
 gui_hooks.reviewer_did_answer_card.append(_on_answer)
 gui_hooks.reviewer_did_show_question.append(_on_show_question)
-gui_hooks.top_toolbar_did_init_links.append(_on_toolbar_links)
 gui_hooks.collection_did_load.append(_on_collection_loaded)
+gui_hooks.theme_did_change.append(_guard(web.apply_window_chrome))
 gui_hooks.main_window_did_init.append(_on_main_window_init)

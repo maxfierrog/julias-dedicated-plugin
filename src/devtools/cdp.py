@@ -20,7 +20,9 @@ _ids = itertools.count(1)
 
 
 def views() -> list[dict]:
-    with urllib.request.urlopen(f"http://localhost:{PORT}/json") as r:
+    with urllib.request.urlopen(
+        f"http://localhost:{PORT}/json", timeout=10
+    ) as r:
         return json.load(r)
 
 
@@ -31,7 +33,7 @@ def call(method: str, view: str = MAIN, **params) -> dict:
     )
     if url is None:
         raise SystemExit(f"No web view titled {view!r}; is dev Anki running?")
-    ws = websocket.create_connection(url, suppress_origin=True)
+    ws = websocket.create_connection(url, suppress_origin=True, timeout=15)
     try:
         msg_id = next(_ids)
         ws.send(json.dumps({"id": msg_id, "method": method, "params": params}))
@@ -73,7 +75,12 @@ def screenshot(path: str, view: str = MAIN, full: bool = True, width=1600):
     from PIL import Image
 
     names = ["top toolbar", MAIN, "bottom toolbar"] if full else [view]
-    parts = [_capture(n) for n in names]
+    parts = []
+    for n in names:
+        # Collapsed bars (e.g. a hidden toolbar) can't be captured; skip them.
+        if full and (evaluate("window.innerHeight", n) or 0) < 16:
+            continue
+        parts.append(_capture(n))
     w = max(p.width for p in parts)
     img = Image.new("RGB", (w, sum(p.height for p in parts)))
     y = 0

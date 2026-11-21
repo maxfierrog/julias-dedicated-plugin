@@ -84,17 +84,11 @@ def on_webview_will_set_content(web_content: WebContent, context) -> None:
     if s["modules"]["theme"]:
         web_content.css.append(url("theme.css"))
     web_content.head += _apply_script(s, ctx)
-    if ctx == "deckbrowser":
-        web_content.js.append(url("deckbrowser.js"))
     if ctx == "reviewer":
         # Always loaded; html classes switch them on/off, so toggling a
         # module in settings applies live without reloading the reviewer.
         web_content.css += [url("cards.css"), url("session.css")]
         web_content.js += [url("cards.js"), url("session.js")]
-        web_content.body += (
-            "<button id='jdp-exit' title='Back to decks (D)' "
-            "onclick=\"pycmd('jdp:decks');return false;\">← Decks</button>"
-        )
 
 
 def apply_js(s: dict | None = None) -> str:
@@ -103,12 +97,33 @@ def apply_js(s: dict | None = None) -> str:
     return f"window.jdpApply && jdpApply({args});"
 
 
+def apply_window_chrome() -> None:
+    """Blend the native title bar into the theme (macOS), or restore it."""
+    from aqt.theme import theme_manager
+
+    from . import mac_window
+
+    s = settings()
+    try:
+        if s["modules"]["theme"]:
+            color = theme.canvas_color(s, theme_manager.night_mode)
+            mac_window.blend_title_bar(mw, color)
+            mw.addonManager.get_logger(__name__).info(
+                "title bar %s %s", color, mac_window.describe(mw)
+            )
+        else:
+            mac_window.restore_title_bar(mw)
+    except Exception:
+        mw.addonManager.get_logger(__name__).exception("title bar")
+
+
 def refresh_live() -> None:
     """Push current settings into every open main-window web view without
     reloading them (keeps the current card, scroll position, etc.)."""
     js = apply_js()
     for web in (mw.web, mw.toolbar.web, mw.bottomWeb):
         web.eval(js)
+    apply_window_chrome()
 
 
 def rerender() -> None:
@@ -117,5 +132,5 @@ def rerender() -> None:
         mw.deckBrowser.refresh()
     elif mw.state == "overview":
         mw.overview.refresh()
-    mw.toolbar.redraw()
+    mw.toolbar.draw()
     refresh_live()

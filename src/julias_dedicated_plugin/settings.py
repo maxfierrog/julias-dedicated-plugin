@@ -18,10 +18,10 @@ DEFAULTS: dict[str, Any] = {
         "fatigue": False,
     },
     "theme": {
-        "preset": "paper",
+        "preset": "periwinkle",
         "accent": "",  # "" = the preset's own accent
-        "ui_font": "inter",
-        "radius": 10,
+        "ui_font": "rounded",
+        "radius": 16,
         "density": "comfortable",
     },
     "cards": {

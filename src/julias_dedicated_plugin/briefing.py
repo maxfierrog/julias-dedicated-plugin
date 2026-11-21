@@ -51,6 +51,40 @@ def primary_deck(col) -> tuple[int, str, int] | None:
     return max(nodes, key=lambda n: n[2])
 
 
+def _icon(name: str) -> str:
+    """Small hand-drawn style icons (stroke = currentColor)."""
+    paths = {
+        "calendar": "<rect x='4' y='5.5' width='16' height='14' rx='4'/>"
+        "<path d='M8 3.5v4M16 3.5v4M4 10.5h16'/>",
+        "heart": "<path d='M12 19.5s-7-4.3-7-9.4A3.9 3.9 0 0 1 12 8a3.9 3.9 0 0 1 "
+        "7 2.1c0 5.1-7 9.4-7 9.4z'/>",
+        "flame": "<path d='M12 20.5c3.3 0 6-2.4 6-5.8 0-3.9-3.4-5.6-3.9-9.7-2.6 "
+        "1.6-4 4.1-4 6.3-1.2-.6-1.8-1.9-1.9-3.1C6.9 9.8 6 11.9 6 14.7c0 3.4 2.7 "
+        "5.8 6 5.8z'/>",
+        "dots": "<circle cx='7' cy='8' r='1.6'/><circle cx='12' cy='8' r='1.6'/>"
+        "<circle cx='17' cy='8' r='1.6'/><circle cx='7' cy='13' r='1.6'/>"
+        "<circle cx='12' cy='13' r='1.6'/><circle cx='7' cy='18' r='1.6'/>",
+    }
+    return (
+        "<svg class='jdp-ico' viewBox='0 0 24 24' fill='none' "
+        "stroke='currentColor' stroke-width='2' stroke-linecap='round' "
+        f"stroke-linejoin='round' aria-hidden='true'>{paths[name]}</svg>"
+    )
+
+
+SPARKLE = (
+    "<svg class='jdp-sparkle' viewBox='0 0 24 24' aria-hidden='true'>"
+    "<path d='M12 2c.6 4.6 2.4 6.9 7 7.9-4.6 1-6.4 3.3-7 8.1-.6-4.8-2.4-7.1-7-8.1 "
+    "4.6-1 6.4-3.3 7-7.9z'/></svg>"
+)
+BLOB = (
+    "<svg class='jdp-blob' viewBox='0 0 600 260' preserveAspectRatio='none' "
+    "aria-hidden='true'><path d='M38 132C22 66 92 18 190 26c84 7 120-22 214-12 "
+    "98 11 176 52 168 126-8 70-92 104-196 106-98 2-128-22-214-14C78 238 52 192 "
+    "38 132z'/></svg>"
+)
+
+
 def _study_button(col, pace: stats.Pace) -> str:
     target = primary_deck(col)
     if target is None:
@@ -60,7 +94,7 @@ def _study_button(col, pace: stats.Pace) -> str:
         f"<button class='jdp-primary jdp-cta' "
         f"onclick=\"pycmd('jdp:study:{did}');return false;\">"
         f"<span>Study {html.escape(name)}</span>"
-        f"<small>{due} cards</small></button>"
+        f"<small>{due}</small></button>"
     )
 
 
@@ -71,18 +105,23 @@ def _summary_line(col, pace: stats.Pace) -> str:
     if total == 0:
         if done.answers:
             return (
-                f"All done for today: <b>{done.answers}</b> answers in "
-                f"<b>{stats.format_minutes(done.seconds)}</b>."
+                f"All done for today: <b>{done.answers} cards</b> in "
+                f"<b>{stats.format_minutes(done.seconds)}</b>. Nice work!"
             )
-        return "Nothing due today."
+        return "Nothing due today. Enjoy the break!"
     eta = stats.format_minutes(pace.estimate(new, learn, review))
-    parts = [f"<b>{review + learn}</b> to review"]
-    if new:
-        parts.append(f"<b>{new}</b> new")
-    line = " · ".join(parts) + f" · about <b>{eta}</b>"
+    cards = "card" if total == 1 else "cards"
+    line = f"You have <b>{total} {cards}</b> today, about <b>{eta}</b>."
     if done.answers:
-        line += f" <span class='jdp-muted'>({done.answers} done)</span>"
+        line += f" <span class='jdp-muted'>{done.answers} done so far.</span>"
     return line
+
+
+def _tile(kind: str, icon: str, title: str, body: str) -> str:
+    return (
+        f"<section class='jdp-tile jdp-tile-{kind}'>"
+        f"<h4>{_icon(icon)}{title}</h4>{body}</section>"
+    )
 
 
 def _forecast_tile(col) -> str:
@@ -92,48 +131,53 @@ def _forecast_tile(col) -> str:
     bars = []
     for i, n in enumerate(days):
         label = (
-            "Today" if i == 0 else (today + dt.timedelta(days=i)).strftime("%a")
+            "today" if i == 0 else (today + dt.timedelta(days=i)).strftime("%a")
         )
-        h = max(4, round(64 * n / peak)) if n else 2
+        h = max(8, round(60 * n / peak)) if n else 6
         bars.append(
-            f"<div class='jdp-bar' title='{n} due'>"
-            f"<span class='jdp-bar-n'>{n}</span>"
+            f"<div class='jdp-bar{' jdp-today' if i == 0 else ''}' "
+            f"title='{n} due'><span class='jdp-bar-n'>{n}</span>"
             f"<i style='height:{h}px'></i><span>{label}</span></div>"
         )
-    return (
-        "<section class='jdp-tile'><h4>Next 7 days</h4>"
-        f"<div class='jdp-bars'>{''.join(bars)}</div></section>"
+    return _tile(
+        "accent",
+        "calendar",
+        "Coming up",
+        f"<div class='jdp-bars'>{''.join(bars)}</div>",
     )
 
 
 def _pct(x: float | None) -> str:
-    return "—" if x is None else f"{round(100 * x)}%"
+    return "–" if x is None else f"{round(100 * x)}%"
 
 
 def _retention_tile(col) -> str:
     r = stats.retention(col)
-    return (
-        "<section class='jdp-tile'><h4>Retention · 30 days</h4>"
+    return _tile(
+        "green",
+        "heart",
+        "Memory",
         f"<div class='jdp-big'>{_pct(r.overall)}</div>"
-        f"<div class='jdp-sub'>Young {_pct(r.young)} · Mature {_pct(r.mature)}"
-        f"<br>{r.reviews} reviews</div></section>"
+        "<div class='jdp-sub'>of reviews remembered this month"
+        f"<br><span class='jdp-muted'>young {_pct(r.young)} · mature "
+        f"{_pct(r.mature)}</span></div>",
     )
 
 
 def _streak_tile(col) -> str:
     s = stats.streak(col)
     if s.current:
-        note = (
-            "Keep it going today" if not s.studied_today else "Done for today"
-        )
+        note = "Done for today!" if s.studied_today else "Keep it going today"
     else:
         note = "A fresh start today"
     unit = "day" if s.current == 1 else "days"
-    return (
-        "<section class='jdp-tile'><h4>Streak</h4>"
+    return _tile(
+        "sun",
+        "flame",
+        "Streak",
         f"<div class='jdp-big'>{s.current} <small>{unit}</small></div>"
-        f"<div class='jdp-sub'>{note}<br>Longest: {s.longest} days</div>"
-        "</section>"
+        f"<div class='jdp-sub'>{note}<br><span class='jdp-muted'>best: "
+        f"{s.longest} days</span></div>",
     )
 
 
@@ -154,13 +198,14 @@ def _heatmap(col) -> str:
             if not c
             else 1 if c < q * 0.5 else 2 if c < q else 3 if c < q * 1.6 else 4
         )
+        today_cls = " jdp-now" if i == len(counts) - 1 else ""
         cells.append(
-            f"<i class='l{level}' title='{day:%a %b %-d}: {c} answers'></i>"
+            f"<i class='l{level}{today_cls}' title='{day:%a %b %-d}: {c} cards'></i>"
         )
     return (
-        "<section class='jdp-tile jdp-heat'><h4>Last "
-        f"{WEEKS} weeks</h4><div class='jdp-heatmap'>{''.join(cells)}</div>"
-        "</section>"
+        "<section class='jdp-tile jdp-heat'>"
+        f"<h4>{_icon('dots')}Your study days</h4>"
+        f"<div class='jdp-heatmap'>{''.join(cells)}</div></section>"
     )
 
 
@@ -170,8 +215,8 @@ def home_html(col, settings: dict, now: dt.datetime | None = None) -> str:
     pace = stats.pace(col)
     title = greeting(settings["name"], now.hour) if b["greeting"] else "Today"
     head = (
-        "<div class='jdp-hello-text'>"
-        f"<h1>{title}</h1>"
+        f"<div class='jdp-hello-text'>{BLOB}"
+        f"<h1>{title}{SPARKLE}</h1>"
         f"<p class='jdp-summary'>{_summary_line(col, pace)}</p></div>"
         "<div class='jdp-hello-actions'>"
         f"{_study_button(col, pace)}"
@@ -192,6 +237,43 @@ def home_html(col, settings: dict, now: dt.datetime | None = None) -> str:
         f"<header class='jdp-hello'>{head}</header>"
         f"<div class='jdp-insights'>{body}</div>"
     )
+
+
+def _link(cmd: str, label: str, key: str = "") -> str:
+    title = f" title='Shortcut: {key}'" if key else ""
+    return (
+        f"<button class='jdp-link'{title} "
+        f"onclick=\"pycmd('{cmd}');return false;\">{label}</button>"
+    )
+
+
+def deck_actions() -> str:
+    """The deck screen's own actions (formerly a separate bottom bar)."""
+    return (
+        "<div class='jdp-deck-actions'>"
+        + _link("create", "+ New deck")
+        + _link("import", "Import a file")
+        + _link("shared", "Find shared decks")
+        + "</div>"
+    )
+
+
+def overview_actions(col) -> str:
+    """A deck's own actions (formerly a separate bottom bar)."""
+    links = [_link("opts", "Options", "O")]
+    dyn = col.decks.current()["dyn"]
+    if dyn:
+        links += [
+            _link("refresh", "Rebuild", "R"),
+            _link("empty", "Empty", "E"),
+        ]
+    else:
+        links.append(_link("studymore", "Custom study", "C"))
+    if col.sched.have_buried():
+        links.append(_link("unbury", "Unbury", "U"))
+    if not dyn:
+        links.append(_link("description", "Description"))
+    return f"<div class='jdp-secondary'>{''.join(links)}</div>"
 
 
 def overview_table(col, pace: stats.Pace) -> str:
@@ -218,4 +300,7 @@ def overview_table(col, pace: stats.Pace) -> str:
         )
     else:
         action = "<div class='jdp-eta'>Nothing due in this deck today.</div>"
-    return f"<div class='jdp-counts'>{tiles}</div><div class='jdp-go'>{action}</div>"
+    return (
+        f"<div class='jdp-counts'>{tiles}</div><div class='jdp-go'>{action}</div>"
+        + overview_actions(col)
+    )

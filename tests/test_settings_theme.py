@@ -69,7 +69,8 @@ def test_custom_accent_applies_without_touching_state_colors():
 def test_invalid_accent_falls_back_to_preset():
     s = settings.merged({"theme": {"accent": "red; }"}})
     light = _vars(theme.tokens_css(s), ":root")
-    assert light["--jdp-accent"] == theme.PRESETS["paper"].light.accent
+    default = settings.DEFAULTS["theme"]["preset"]
+    assert light["--jdp-accent"] == theme.PRESETS[default].light.accent
 
 
 def test_theme_module_off_leaves_anki_tokens_alone():

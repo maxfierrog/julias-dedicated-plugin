@@ -1,85 +1,117 @@
-html:not(.jdp-session) #jdp-session,
-html:not(.jdp-session) #jdp-exit {
-  display: none !important;
-}
-#jdp-exit {
-  position: fixed;
-  top: 7px;
-  left: 10px;
-  z-index: 60;
-  padding: 4px 10px;
-  font-family: var(--jdp-font-ui);
-  font-size: 12px;
-  font-weight: 550;
-  color: var(--jdp-faint);
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 999px;
-  cursor: pointer;
-  transition: color 0.15s, background 0.15s, border-color 0.15s;
-}
-#jdp-exit:hover {
-  color: var(--jdp-fg);
-  background: var(--jdp-elevated);
-  border-color: var(--jdp-border);
-}
+/* Reviewer top row. The exit is always there (focus mode hides Anki's
+   toolbar); progress and time follow the session module switch. */
 #jdp-session {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 50;
-  font-family: var(--jdp-font-ui);
+  font-family: var(--jdp-font-display);
   pointer-events: none;
 }
-#jdp-session .jdp-progress {
-  height: 3px;
-  background: color-mix(in srgb, var(--jdp-fg) 7%, transparent);
-}
-#jdp-session .jdp-progress i {
-  display: block;
-  height: 100%;
-  background: var(--jdp-accent);
-  border-radius: 0 3px 3px 0;
-  transition: width 0.4s ease;
-}
-#jdp-session .jdp-session-row {
+.jdp-session-row {
   display: flex;
-  justify-content: space-between;
-  padding: 11px 18px 0 112px;
-  font-size: 12px;
-  font-weight: 550;
-  color: var(--jdp-faint);
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px 0;
+}
+#jdp-session button {
+  pointer-events: auto;
+  font-family: var(--jdp-font-display);
+  font-weight: 700;
+  cursor: pointer;
+}
+#jdp-session .jdp-exit {
+  flex: none;
+  padding: 4px 12px;
+  font-size: 12.5px;
+  color: var(--jdp-subtle);
+  background: var(--jdp-elevated);
+  border: 2px solid var(--jdp-border-subtle);
+  border-radius: 999px;
+  box-shadow: 0 2px 0 var(--jdp-border-subtle);
+  transition: transform 0.25s var(--jdp-bounce), color 0.2s;
+}
+#jdp-session .jdp-exit:hover {
+  color: var(--jdp-accent);
+  transform: translateX(-2px);
+}
+.jdp-track {
+  position: relative;
+  flex: 1;
+  max-width: 30rem;
+  margin: 0 auto;
+  height: 22px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--jdp-fg) 6%, var(--jdp-canvas));
+  border: 2px solid var(--jdp-border-subtle);
+  overflow: hidden;
+}
+.jdp-track[hidden] {
+  visibility: hidden;
+  display: block;
+}
+.jdp-track i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--jdp-accent) 75%, var(--jdp-sun));
+  transition: width 0.6s var(--jdp-bounce);
+}
+.jdp-track span {
+  position: relative;
+  display: block;
+  text-align: center;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 18px;
+  color: var(--jdp-fg);
   font-variant-numeric: tabular-nums;
 }
-#jdp-session .jdp-fatigue {
+.jdp-time {
+  flex: none;
+  min-width: 92px;
+  text-align: right;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--jdp-faint);
+}
+html:not(.jdp-session) .jdp-track,
+html:not(.jdp-session) .jdp-time,
+html:not(.jdp-session) .jdp-fatigue {
+  visibility: hidden !important;
+}
+.jdp-fatigue {
   pointer-events: auto;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   width: fit-content;
   max-width: min(36rem, 90vw);
-  margin: 10px auto 0;
-  padding: 9px 10px 9px 16px;
-  font-size: 13px;
+  margin: 12px auto 0;
+  padding: 8px 8px 8px 14px;
+  font-family: var(--jdp-font-ui);
+  font-size: 13.5px;
   line-height: 1.4;
   color: var(--jdp-fg);
-  background: var(--jdp-elevated);
-  border: 1px solid var(--jdp-accent-line);
+  background: color-mix(in srgb, var(--jdp-sun) 14%, var(--jdp-elevated));
+  border: 2px solid color-mix(in srgb, var(--jdp-sun) 45%, transparent);
   border-radius: 999px;
-  box-shadow: var(--jdp-shadow);
-  animation: jdp-fade 0.3s ease-out;
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--jdp-sun) 45%, transparent);
+  animation: jdp-pop 0.45s var(--jdp-bounce);
 }
-#jdp-session .jdp-fatigue[hidden] {
+.jdp-fatigue[hidden] {
   display: none;
 }
-#jdp-session .jdp-fatigue button {
+@keyframes jdp-pop {
+  from { opacity: 0; transform: translateY(-6px) scale(0.96); }
+}
+.jdp-fatigue button {
   flex: none;
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   border: none;
   border-radius: 999px;
-  background: var(--jdp-inset);
+  background: color-mix(in srgb, var(--jdp-sun) 22%, transparent);
   color: var(--jdp-subtle);
-  cursor: pointer;
 }

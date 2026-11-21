@@ -12,7 +12,7 @@ html.jdp-cards body {
 html.jdp-cards #qa {
   box-sizing: border-box;
   max-width: var(--jdp-card-width);
-  margin: calc(44px * var(--jdp-space)) auto 96px;
+  margin: calc(58px * var(--jdp-space)) auto 96px;
   padding: 0 28px;
   font-family: var(--jdp-font-card) !important;
   font-size: var(--jdp-card-size) !important;
@@ -25,8 +25,8 @@ html.jdp-cards.jdp-card-colors #qa {
 }
 html.jdp-cards.jdp-surface-sheet #qa {
   background: var(--jdp-elevated);
-  border: 1px solid var(--jdp-border-subtle);
-  border-radius: calc(var(--jdp-radius) + 4px);
+  border: 2px solid var(--jdp-border-subtle);
+  border-radius: calc(var(--jdp-radius) + 12px);
   box-shadow: var(--jdp-shadow);
   padding: calc(36px * var(--jdp-space)) calc(40px * var(--jdp-space));
 }
@@ -43,6 +43,9 @@ html.jdp-cards #qa.jdp-left table {
 html.jdp-cards #qa .cloze {
   color: var(--jdp-accent) !important;
   font-weight: 700 !important;
+  padding: 0 0.15em;
+  border-radius: 0.35em;
+  background: color-mix(in srgb, var(--jdp-accent) 12%, transparent);
 }
 html.jdp-cards #qa .cloze-inactive {
   color: inherit !important;
@@ -137,7 +140,7 @@ html.jdp-cards #qa a.hint {
   margin: 0.5em 0.2em 0;
   padding: 0.25em 0.9em;
   border-radius: 999px;
-  font-family: var(--jdp-font-ui);
+  font-family: var(--jdp-font-display);
   font-size: 0.62em;
   font-weight: 600;
   text-decoration: none;
