@@ -165,11 +165,11 @@ html.jdp-ctx-deckbrowser .jdp-hello {
   z-index: -1;
   left: 50%;
   top: 50%;
-  width: calc(100% + 48px);
-  height: calc(100% + 28px);
+  width: calc(100% + 110px);
+  height: calc(100% + 80px);
   transform: translate(-50%, -50%);
   pointer-events: none;
-  filter: blur(14px);
+  filter: blur(18px);
 }
 .jdp-blob path {
   fill: color-mix(in srgb, var(--jdp-sun) 22%, transparent);
