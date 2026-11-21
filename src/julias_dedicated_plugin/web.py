@@ -138,9 +138,15 @@ def style_window(widget) -> None:
 def refresh_live() -> None:
     """Push current settings into every open main-window web view without
     reloading them (keeps the current card, scroll position, etc.)."""
+    from . import qt_theme
+
     js = apply_js()
     for web in (mw.web, mw.toolbar.web, mw.bottomWeb):
         web.eval(js)
+    try:
+        qt_theme.apply(settings())  # re-styles native windows, then title bars
+    except Exception:
+        mw.addonManager.get_logger(__name__).exception("qt theme")
     apply_window_chrome()
 
 

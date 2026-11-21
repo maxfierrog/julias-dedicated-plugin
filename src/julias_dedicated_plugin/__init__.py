@@ -164,6 +164,9 @@ _watcher = _WindowWatcher()
 @_guard
 def _on_collection_loaded(col) -> None:
     apply_focus_mode()
+    from . import qt_theme
+
+    qt_theme.apply(web.settings())
     web.apply_window_chrome()
     # The toolbar was first drawn before her settings were readable.
     mw.toolbar.draw()
