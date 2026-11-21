@@ -1,6 +1,6 @@
 [project]
-name = "better-reviewer"
-description = "An Anki add-on that improves the everyday review experience."
+name = "julias-dedicated-plugin"
+description = "Julia's Dedicated Plugin: a personal, maintained Anki study suite."
 authors = [{ name = "Max Fierro" }]
 version = "0.1.0"
 readme = "README.md"
@@ -16,6 +16,7 @@ dev = [
     "aqt[qt6]==26.9.4",
     "black>=25",
     "pytest>=8",
+    "websocket-client>=1.8",
 ]
 
 [project.scripts]
@@ -23,6 +24,11 @@ anki-dev = "devtools.scripts:run"
 link = "devtools.scripts:link"
 unlink = "devtools.scripts:unlink"
 package = "devtools.scripts:package"
+seed = "devtools.seed:main"
+simulate = "devtools.seed:simulate_main"
+install-addon = "devtools.addons:main"
+screenshot = "devtools.cdp:screenshot_main"
+anki-js = "devtools.cdp:js_main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/devtools"]

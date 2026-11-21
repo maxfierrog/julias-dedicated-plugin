@@ -20,4 +20,4 @@ __pycache__/
 /dist
 
 # Per-user add-on config written by Anki
-/src/better_reviewer/meta.json
+/src/julias_dedicated_plugin/meta.json

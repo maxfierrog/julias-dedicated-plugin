@@ -1,4 +1,4 @@
-"""Development helpers for the Better Reviewer add-on.
+"""Development helpers for Julia's Dedicated Plugin.
 
 All Anki state used during development lives in ``.anki-dev/`` at the repo
 root (passed to Anki via ``--base``), so experiments never touch a real
@@ -13,7 +13,7 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-ADDON_SRC = ROOT / "src" / "better_reviewer"
+ADDON_SRC = ROOT / "src" / "julias_dedicated_plugin"
 DEV_BASE = ROOT / ".anki-dev"
 DIST = ROOT / "dist"
 ANKI_BIN = Path(
