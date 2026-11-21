@@ -432,6 +432,8 @@ html.jdp-ctx-deckbrowser td.opts a {
   align-items: center;
 }
 html.jdp-ctx-deckbrowser .gears {
+  /* Anki pads the icon's top, which drops the glyph below center. */
+  padding: 0 !important;
   opacity: 0;
   transition: opacity 0.2s;
 }
