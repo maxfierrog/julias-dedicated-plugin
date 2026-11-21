@@ -159,3 +159,21 @@ def goto_main() -> None:
 
         time.sleep(0.6)
         print(screenshot(a.shot))
+
+
+def grab_main() -> None:
+    """Save PNGs of every visible native Anki window (dev mode only)."""
+    import glob
+    import time
+
+    p = argparse.ArgumentParser(description="Capture native Anki windows.")
+    p.add_argument("folder")
+    a = p.parse_args()
+    folder = os.path.abspath(a.folder)
+    os.makedirs(folder, exist_ok=True)
+    for f in glob.glob(os.path.join(folder, "*.png")):
+        os.remove(f)
+    evaluate(f"pycmd({json.dumps('jdp:dev-grab:' + folder)})", "top toolbar")
+    time.sleep(1.0)
+    for f in sorted(glob.glob(os.path.join(folder, "*.png"))):
+        print(f)

@@ -405,3 +405,51 @@ def html_classes(settings: dict) -> list[str]:
 def canvas_color(settings: dict, dark: bool) -> str:
     preset = PRESETS.get(settings["theme"]["preset"], PRESETS["periwinkle"])
     return (preset.dark if dark else preset.light).canvas
+
+
+def _rgb(hex_color: str) -> str:
+    return ", ".join(str(int(hex_color[i : i + 2], 16)) for i in (1, 3, 5))
+
+
+def bootstrap_css(settings: dict) -> str:
+    """Anki's newer screens (editor, deck options, stats) paint with
+    Bootstrap's variables; point those at our palette too."""
+    preset = PRESETS.get(settings["theme"]["preset"], PRESETS["periwinkle"])
+    custom = (
+        settings["theme"]["accent"]
+        if valid_hex(settings["theme"]["accent"])
+        else ""
+    )
+
+    def block(p: Palette, accent: str) -> str:
+        pairs = {
+            "--bs-body-bg": p.canvas,
+            "--bs-body-bg-rgb": _rgb(p.canvas),
+            "--bs-body-color": p.fg,
+            "--bs-body-color-rgb": _rgb(p.fg),
+            "--bs-emphasis-color": p.fg,
+            "--bs-secondary-color": p.subtle,
+            "--bs-tertiary-color": p.faint,
+            "--bs-secondary-bg": p.elevated,
+            "--bs-secondary-bg-rgb": _rgb(p.elevated),
+            "--bs-tertiary-bg": p.inset,
+            "--bs-tertiary-bg-rgb": _rgb(p.inset),
+            "--bs-border-color": p.border,
+            "--bs-link-color": accent,
+            "--bs-link-color-rgb": _rgb(accent),
+            "--bs-primary": accent,
+            "--bs-primary-rgb": _rgb(accent),
+            "--bs-focus-ring-color": f"rgba({_rgb(accent)}, 0.3)",
+        }
+        return "".join(f"{k}:{v};" for k, v in pairs.items())
+
+    light = block(preset.light, custom or preset.light.accent)
+    dark = block(preset.dark, custom or preset.dark.accent)
+    native = (
+        f":root{{accent-color:{custom or preset.light.accent};}}"
+        f":root.night-mode{{accent-color:{custom or preset.dark.accent};}}"
+    )
+    return native + (
+        f":root,:root[data-bs-theme]{{{light}}}"
+        f":root.night-mode,:root.night-mode[data-bs-theme]{{{dark}}}"
+    )

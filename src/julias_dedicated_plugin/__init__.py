@@ -6,6 +6,8 @@ AnkiWeb installs (so never hardcode it). Module-level code runs inside the GUI
 process: keep it to hook registration and do real work in the hooks.
 """
 
+import os
+
 from aqt import gui_hooks, mw
 from aqt.qt import QEvent, QObject, Qt, QTimer, QWidget
 from aqt.toolbar import HideMode
@@ -127,6 +129,8 @@ def _on_js_message(handled, message: str, context):
             from .settings_dialog import handle
 
             handle(cmd, arg)
+        elif cmd == "dev-grab" and os.environ.get("ANKIDEV"):
+            _dev_grab(arg)
         elif cmd == "decks":
             mw.moveToState("deckBrowser")
         elif cmd == "fatigue-dismiss" and _session is not None:
@@ -135,6 +139,17 @@ def _on_js_message(handled, message: str, context):
     except Exception:
         log.exception("error handling %s", message)
     return (True, None)
+
+
+def _dev_grab(folder: str) -> None:
+    """Dev only: save a PNG of every visible top-level window (native Qt
+    windows can't be captured over DevTools)."""
+    from aqt.qt import QApplication
+
+    for i, w in enumerate(QApplication.topLevelWidgets()):
+        if w.isVisible() and w.isWindow():
+            name = f"{i:02d}-{type(w).__name__}.png"
+            w.grab().save(os.path.join(folder, name))
 
 
 # --- Window title bars ------------------------------------------------------
@@ -185,6 +200,22 @@ gui_hooks.webview_will_set_content.append(
     _guard(web.on_webview_will_set_content)
 )
 gui_hooks.webview_did_receive_js_message.append(_on_js_message)
+
+
+def _on_style_init(buf: str) -> str:
+    from . import qt_theme
+
+    try:
+        return qt_theme.on_style_did_init(buf)
+    except Exception:
+        log.exception("qt style")
+        return buf
+
+
+gui_hooks.style_did_init.append(_on_style_init)
+gui_hooks.webview_did_inject_style_into_page.append(
+    _guard(web.on_webview_did_inject_style)
+)
 gui_hooks.deck_browser_will_render_content.append(_on_deck_browser)
 gui_hooks.overview_will_render_content.append(_on_overview)
 gui_hooks.state_did_change.append(_on_state_change)

@@ -32,6 +32,7 @@ install-addon = "devtools.addons:main"
 screenshot = "devtools.cdp:screenshot_main"
 anki-js = "devtools.cdp:js_main"
 anki-goto = "devtools.cdp:goto_main"
+anki-grab = "devtools.cdp:grab_main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/devtools"]

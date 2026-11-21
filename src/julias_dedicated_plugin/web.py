@@ -75,9 +75,35 @@ jdpApply({json.dumps(tokens)}, {json.dumps(classes)});
 </script>"""
 
 
+def _tokens_only_js(s: dict) -> str:
+    """For Anki's functional screens (editor, deck options, stats, card
+    info...): only our palette tokens, which Anki's own CSS already uses. No
+    layout or font changes; those screens keep their shape."""
+    css = json.dumps(theme.tokens_css(s) + theme.bootstrap_css(s))
+    return (
+        "(function(){let t=document.getElementById('jdp-tokens');"
+        "if(!t){t=document.createElement('style');t.id='jdp-tokens';"
+        f"document.head.appendChild(t);}}t.textContent={css};}})();"
+    )
+
+
+def on_webview_did_inject_style(webview) -> None:
+    """Newer page-based screens (deck options, stats, editor...)."""
+    s = settings()
+    if s["modules"]["theme"] and mw.col is not None:
+        webview.eval(_tokens_only_js(s))
+
+
 def on_webview_will_set_content(web_content: WebContent, context) -> None:
     ctx = context_name(context)
     if ctx is None:
+        # A functional screen we don't redesign: palette tokens only.
+        s = settings()
+        if s["modules"]["theme"] and mw.col is not None:
+            web_content.head += (
+                f"<style id='jdp-tokens'>{theme.tokens_css(s)}"
+                f"{theme.bootstrap_css(s)}</style>"
+            )
         return
     s = settings()
     web_content.css.append(url("fonts.css"))
@@ -127,10 +153,7 @@ def style_window(widget) -> None:
         else:
             # Native Qt windows (Browse, Add, dialogs): match their own fill.
             color = widget.palette().color(QPalette.ColorRole.Window).name()
-        ok = mac_window.blend_title_bar(widget, color)
-        mw.addonManager.get_logger(__name__).debug(
-            "title bar %s %s %s", type(widget).__name__, color, ok
-        )
+        mac_window.blend_title_bar(widget, color)
     except Exception:
         mw.addonManager.get_logger(__name__).exception("title bar")
 
@@ -140,9 +163,21 @@ def refresh_live() -> None:
     reloading them (keeps the current card, scroll position, etc.)."""
     from . import qt_theme
 
-    js = apply_js()
-    for web in (mw.web, mw.toolbar.web, mw.bottomWeb):
-        web.eval(js)
+    from aqt.qt import QApplication
+    from aqt.webview import AnkiWebView
+
+    s = settings()
+    main = apply_js(s)
+    tokens = (
+        _tokens_only_js(s)
+        if s["modules"]["theme"]
+        else ("document.getElementById('jdp-tokens')?.remove();")
+    )
+    # Every open web view: redesigned screens re-apply fully, functional
+    # screens (editor, options, stats...) just get the palette.
+    for w in QApplication.allWidgets():
+        if isinstance(w, AnkiWebView):
+            w.eval(f"if (window.jdpApply) {{ {main} }} else {{ {tokens} }}")
     try:
         qt_theme.apply(settings())  # re-styles native windows, then title bars
     except Exception:
