@@ -75,18 +75,6 @@ def blend_title_bar(widget, hex_color: str) -> bool:
     return True
 
 
-def describe(widget) -> dict:
-    """Read the window's title-bar state back from AppKit (for diagnostics)."""
-    view = ctypes.c_void_p(int(widget.winId()))
-    window = ctypes.c_void_p(_send(ctypes.c_void_p, view, "window"))
-    return {
-        "transparent": bool(
-            _send(ctypes.c_bool, window, "titlebarAppearsTransparent")
-        ),
-        "title_visibility": _send(ctypes.c_long, window, "titleVisibility"),
-    }
-
-
 def restore_title_bar(widget) -> bool:
     if sys.platform != "darwin":
         return False

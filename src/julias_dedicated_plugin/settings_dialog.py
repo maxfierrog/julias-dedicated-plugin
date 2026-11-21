@@ -44,6 +44,8 @@ def _page_data() -> dict:
 
 
 class SettingsDialog(QDialog):
+    jdp_themed = True  # web content in our theme: title bar uses our canvas
+
     def __init__(self) -> None:
         super().__init__(mw)
         self.setWindowTitle("Customize")

@@ -98,21 +98,39 @@ def apply_js(s: dict | None = None) -> str:
 
 
 def apply_window_chrome() -> None:
-    """Blend the native title bar into the theme (macOS), or restore it."""
+    """Blend every open window's title bar into its own background (macOS),
+    or restore the stock title bars when the theme is off."""
+    from aqt.qt import QApplication
+
+    for widget in QApplication.topLevelWidgets():
+        # The main window may not be shown yet when her collection loads.
+        if widget.isVisible() or widget is mw:
+            style_window(widget)
+
+
+def style_window(widget) -> None:
+    from aqt.qt import QPalette
     from aqt.theme import theme_manager
 
     from . import mac_window
 
-    s = settings()
+    if not widget.isWindow() or mw.col is None and widget is not mw:
+        return
     try:
-        if s["modules"]["theme"]:
+        s = settings()
+        if not s["modules"]["theme"]:
+            mac_window.restore_title_bar(widget)
+            return
+        if widget is mw or getattr(widget, "jdp_themed", False):
+            # Web-based windows we theme: match our canvas.
             color = theme.canvas_color(s, theme_manager.night_mode)
-            mac_window.blend_title_bar(mw, color)
-            mw.addonManager.get_logger(__name__).info(
-                "title bar %s %s", color, mac_window.describe(mw)
-            )
         else:
-            mac_window.restore_title_bar(mw)
+            # Native Qt windows (Browse, Add, dialogs): match their own fill.
+            color = widget.palette().color(QPalette.ColorRole.Window).name()
+        ok = mac_window.blend_title_bar(widget, color)
+        mw.addonManager.get_logger(__name__).debug(
+            "title bar %s %s %s", type(widget).__name__, color, ok
+        )
     except Exception:
         mw.addonManager.get_logger(__name__).exception("title bar")
 

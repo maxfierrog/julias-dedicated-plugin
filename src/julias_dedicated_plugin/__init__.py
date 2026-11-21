@@ -7,6 +7,7 @@ process: keep it to hook registration and do real work in the hooks.
 """
 
 from aqt import gui_hooks, mw
+from aqt.qt import QEvent, QObject, Qt, QTimer, QWidget
 from aqt.toolbar import HideMode
 
 from . import briefing, session, stats, web
@@ -136,6 +137,27 @@ def _on_js_message(handled, message: str, context):
     return (True, None)
 
 
+# --- Window title bars ------------------------------------------------------
+
+
+class _WindowWatcher(QObject):
+    """Styles each top-level window's title bar as it is first shown."""
+
+    def eventFilter(self, obj, event):
+        if (
+            event.type() == QEvent.Type.Show
+            and isinstance(obj, QWidget)
+            and obj.isWindow()
+            and obj.windowType() in (Qt.WindowType.Window, Qt.WindowType.Dialog)
+        ):
+            # After the native window exists and Qt has set its look.
+            QTimer.singleShot(0, lambda w=obj: web.style_window(w))
+        return False
+
+
+_watcher = _WindowWatcher()
+
+
 # --- Startup ----------------------------------------------------------------
 
 
@@ -151,6 +173,7 @@ def _on_main_window_init() -> None:
     from .settings_dialog import add_menu_action
 
     add_menu_action()
+    mw.app.installEventFilter(_watcher)
     log.info("Julia's Dedicated Plugin %s loaded", __version__)
 
 
@@ -165,5 +188,8 @@ gui_hooks.state_did_change.append(_on_state_change)
 gui_hooks.reviewer_did_answer_card.append(_on_answer)
 gui_hooks.reviewer_did_show_question.append(_on_show_question)
 gui_hooks.collection_did_load.append(_on_collection_loaded)
-gui_hooks.theme_did_change.append(_guard(web.apply_window_chrome))
+# Anki updates its Qt palette on theme change; restyle after it does.
+gui_hooks.theme_did_change.append(
+    lambda: QTimer.singleShot(0, _guard(web.apply_window_chrome))
+)
 gui_hooks.main_window_did_init.append(_on_main_window_init)
