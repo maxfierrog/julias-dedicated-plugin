@@ -37,15 +37,18 @@
   flex: none;
   padding: 6px 14px;
   font-size: 14px;
-  color: var(--jdp-subtle);
-  background: var(--jdp-elevated);
-  border: 2px solid var(--jdp-border-subtle);
-  border-radius: var(--jdp-radius-pill);
-  box-shadow: 0 2px 0 var(--jdp-border-subtle);
-  transition: transform 0.25s var(--jdp-bounce), color 0.2s;
+  /* !important: Anki's own button:hover rules would otherwise swap in a
+     gradient and a thinner border. */
+  color: var(--jdp-subtle) !important;
+  background: var(--jdp-elevated) !important;
+  border: 2px solid var(--jdp-border-subtle) !important;
+  border-radius: var(--jdp-radius-pill) !important;
+  box-shadow: 0 2px 0 var(--jdp-border-subtle) !important;
+  transition: color 0.2s, border-color 0.2s;
 }
 #jdp-session .jdp-exit:hover {
-  color: var(--jdp-accent);
+  color: var(--jdp-accent) !important;
+  border-color: color-mix(in srgb, var(--jdp-accent) 40%, var(--jdp-border-subtle)) !important;
 }
 .jdp-progress {
   min-width: 0;
@@ -116,8 +119,10 @@ html:not(.jdp-session) .jdp-fatigue {
   flex: none;
   width: 26px;
   height: 26px;
-  border: none;
-  border-radius: var(--jdp-radius-pill);
-  background: color-mix(in srgb, var(--jdp-sun) 22%, transparent);
-  color: var(--jdp-subtle);
+  padding: 0 !important;
+  border: none !important;
+  border-radius: var(--jdp-radius-pill) !important;
+  background: color-mix(in srgb, var(--jdp-sun) 22%, transparent) !important;
+  box-shadow: none !important;
+  color: var(--jdp-subtle) !important;
 }

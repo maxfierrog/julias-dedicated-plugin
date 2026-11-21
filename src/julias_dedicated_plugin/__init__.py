@@ -181,6 +181,10 @@ def _on_js_message(handled, message: str, context):
             handle(cmd, arg)
         elif cmd == "dev-grab" and os.environ.get("ANKIDEV"):
             _dev_grab(arg)
+        elif cmd == "dev-tooltip" and os.environ.get("ANKIDEV"):
+            from aqt.qt import QCursor, QToolTip
+
+            QToolTip.showText(QCursor.pos(), arg or "Back to decks (D)")
         elif cmd == "dev-close-popup" and os.environ.get("ANKIDEV"):
             from aqt.qt import QApplication
 
@@ -233,7 +237,11 @@ class _WindowWatcher(QObject):
 
 
 def _is_rounded_popup(obj) -> bool:
-    return isinstance(obj, QMenu) or type(obj).__name__ == "QTipLabel"
+    # Tooltips are Qt's private QTipLabel (seen from Python as a QLabel), so
+    # check the C++ class name rather than the Python type.
+    return isinstance(obj, QMenu) or (
+        isinstance(obj, QObject) and obj.inherits("QTipLabel")
+    )
 
 
 _watcher = _WindowWatcher()
