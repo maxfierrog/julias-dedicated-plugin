@@ -78,7 +78,12 @@ def screenshot(path: str, view: str = MAIN, full: bool = True, width=1600):
     parts = []
     for n in names:
         # Collapsed bars (e.g. a hidden toolbar) can't be captured; skip them.
-        if full and (evaluate("window.innerHeight", n) or 0) < 16:
+        visible = evaluate(
+            "document.visibilityState === 'visible' && window.innerHeight >= 16"
+            " && !document.body.classList.contains('hidden')",
+            n,
+        )
+        if full and not visible:
             continue
         parts.append(_capture(n))
     w = max(p.width for p in parts)

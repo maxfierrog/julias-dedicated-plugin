@@ -1,5 +1,7 @@
-/* Reviewer top row: [← Decks] [progress track] [time left], plus an optional
-   break reminder. State is pushed from Python. */
+/* Review screen header, centered above the card:
+     [← Decks] [=========== progress ===========]
+               12 of 72 done · about 24 min left · done by 4:40
+   plus an optional break reminder. State is pushed from Python. */
 (function () {
   "use strict";
 
@@ -9,11 +11,11 @@
       r = document.createElement("div");
       r.id = "jdp-session";
       r.innerHTML =
-        '<div class="jdp-session-row">' +
+        '<div class="jdp-session-inner">' +
         '<button type="button" class="jdp-exit" title="Back to decks (D)">← Decks</button>' +
-        '<div class="jdp-track" role="progressbar" aria-valuemin="0" aria-valuemax="100">' +
-        "<i></i><span></span></div>" +
-        '<span class="jdp-time"></span></div>' +
+        '<div class="jdp-progress">' +
+        '<div class="jdp-track" role="progressbar" aria-valuemin="0" aria-valuemax="100"><i></i></div>' +
+        '<div class="jdp-caption"></div></div></div>' +
         '<div class="jdp-fatigue" hidden><span class="jdp-cup">☕</span><span class="jdp-msg"></span>' +
         '<button type="button" aria-label="Dismiss">✕</button></div>';
       r.querySelector(".jdp-exit").addEventListener("click", () =>
@@ -27,17 +29,36 @@
     return r;
   }
 
+  function b(text) {
+    const e = document.createElement("b");
+    e.textContent = text;
+    return e;
+  }
+
   window.jdpSession = {
     update(s) {
       const r = root();
       const pct = Math.round(s.progress * 1000) / 10;
       const track = r.querySelector(".jdp-track");
-      track.hidden = !s.show_progress;
       track.setAttribute("aria-valuenow", String(Math.round(pct)));
-      track.querySelector("i").style.width = Math.max(pct, 2) + "%";
-      track.querySelector("span").textContent = `${s.done} done · ${s.remaining} to go`;
-      r.querySelector(".jdp-time").textContent =
-        s.show_eta && s.eta ? `about ${s.eta} left` : "";
+      track.querySelector("i").style.width = Math.max(pct, 1.5) + "%";
+      r.querySelector(".jdp-progress").hidden = !s.show_progress && !s.show_eta;
+      track.hidden = !s.show_progress;
+
+      const cap = r.querySelector(".jdp-caption");
+      const parts = [];
+      if (s.show_progress) {
+        const total = s.done + s.remaining;
+        parts.push([b(String(s.done)), ` of ${total} done`]);
+      }
+      if (s.show_eta && s.eta) {
+        parts.push(["about ", b(s.eta), " left"]);
+        parts.push([`done by ${s.finish}`]);
+      }
+      cap.replaceChildren(
+        ...parts.flatMap((p, i) => (i ? [" · ", ...p] : p)),
+      );
+
       const f = r.querySelector(".jdp-fatigue");
       f.hidden = !s.fatigue;
       f.querySelector(".jdp-msg").textContent =
@@ -46,7 +67,6 @@
     },
   };
 
-  // Show the exit right away, before the first state push.
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", root);
   } else {

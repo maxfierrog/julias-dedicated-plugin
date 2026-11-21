@@ -276,6 +276,9 @@ def _on_accent(hex_color: str) -> str:
     return "#16130F" if lum > 0.36 else "#FFFFFF"
 
 
+_anki_radius_tokens: dict[str, str] = {}
+
+
 def _palette_vars(
     p: Palette, accent: str, dark: bool, on_accent: str, anki: bool
 ) -> str:
@@ -339,6 +342,7 @@ def _palette_vars(
     }
     if anki:
         pairs = {**anki_pairs, **pairs}
+        pairs.update(_anki_radius_tokens)
     return "".join(f"{k}:{v};" for k, v in pairs.items())
 
 
@@ -360,7 +364,10 @@ def tokens_css(settings: dict) -> str:
         f"{k}:{v};"
         for k, v in {
             "--jdp-font-ui": UI_FONTS.get(t["ui_font"], UI_FONTS["rounded"]),
-            "--jdp-font-display": DISPLAY_FONT,
+            # One family everywhere: headings use her interface font too.
+            "--jdp-font-display": UI_FONTS.get(
+                t["ui_font"], UI_FONTS["rounded"]
+            ),
             "--jdp-bounce": "cubic-bezier(0.34, 1.56, 0.64, 1)",
             "--jdp-font-card": CARD_FONTS.get(
                 c["font"], CARD_FONTS["atkinson"]
@@ -371,8 +378,21 @@ def tokens_css(settings: dict) -> str:
             ),
             "--jdp-radius": f"{radius}px",
             "--jdp-radius-sm": f"{max(0, radius - 4)}px",
+            # Buttons, chips and other "pill" shapes scale with the setting:
+            # square at 0, fully round from about the default upward.
+            "--jdp-radius-pill": f"{round(radius * 1.15)}px",
+            # 0..1, for shapes that are best expressed as a percentage.
+            "--jdp-round": f"{radius / 28:.3f}",
             "--jdp-space": DENSITY_SPACE.get(t["density"], "1"),
         }.items()
+    )
+    _anki_radius_tokens.clear()
+    _anki_radius_tokens.update(
+        {
+            "--border-radius": f"{round(radius * 0.5)}px",
+            "--border-radius-medium": f"{radius}px",
+            "--border-radius-large": f"{radius + 4}px",
+        }
     )
     light_vars = _palette_vars(
         preset.light, light_accent, False, _on_accent(light_accent), anki
@@ -453,3 +473,17 @@ def bootstrap_css(settings: dict) -> str:
         f":root,:root[data-bs-theme]{{{light}}}"
         f":root.night-mode,:root.night-mode[data-bs-theme]{{{dark}}}"
     )
+
+
+# Family names as registered with Qt (from web/fonts/ttf); None = system.
+QT_FONT_FAMILIES = {
+    "rounded": "Nunito",
+    "playful": "Quicksand",
+    "inter": "Inter",
+    "system": None,
+}
+QT_FONT_FILES = {
+    "Nunito": "nunito.ttf",
+    "Quicksand": "quicksand.ttf",
+    "Inter": "inter.ttf",
+}

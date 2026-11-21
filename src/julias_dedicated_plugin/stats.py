@@ -188,3 +188,29 @@ def format_minutes(seconds: float) -> str:
         return f"{minutes} min"
     h, m = divmod(minutes, 60)
     return f"{h} h {m} min" if m else f"{h} h"
+
+
+def deck_progress(col) -> dict[int, tuple[int, int]]:
+    """Today's progress per deck, including subdecks: {deck id: (cards
+    answered today, cards still due today)}."""
+    done_by_did: dict[int, int] = {}
+    for did, n in col.db.all(
+        "select case when c.odid then c.odid else c.did end, count(distinct r.cid) "
+        "from revlog r join cards c on c.id = r.cid where r.id >= ? group by 1",
+        _day_start(col) * 1000,
+    ):
+        done_by_did[did] = n
+
+    out: dict[int, tuple[int, int]] = {}
+
+    def walk(node) -> int:
+        done = done_by_did.get(node.deck_id, 0)
+        for child in node.children:
+            done += walk(child)
+        remaining = node.new_count + node.learn_count + node.review_count
+        out[node.deck_id] = (done, remaining)
+        return done
+
+    for top in col.sched.deck_due_tree().children:
+        walk(top)
+    return out

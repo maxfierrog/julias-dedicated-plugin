@@ -235,7 +235,7 @@
         row("Appearance", "Auto follows your Mac", segmented("anki.mode", [[0, "Auto"], [1, "Light"], [2, "Dark"]], data.mode)),
         row("Corners", null, slider("theme.radius", 0, 28, 1, radiusLabel)),
         row("Spacing", null, segmented("theme.density", [["compact", "Compact"], ["comfortable", "Comfortable"]])),
-        row("Interface font", null, segmented("theme.ui_font", [["rounded", "Rounded"], ["inter", "Crisp"], ["system", "System"]])),
+        row("Font", "Used everywhere except card text",  segmented("theme.ui_font", [["rounded", "Rounded"], ["playful", "Playful"], ["inter", "Crisp"], ["system", "System"]])),
       ),
       section(
         "Cards",

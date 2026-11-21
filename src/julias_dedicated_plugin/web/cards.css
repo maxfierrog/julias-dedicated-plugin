@@ -12,7 +12,7 @@ html.jdp-cards body {
 html.jdp-cards #qa {
   box-sizing: border-box;
   max-width: var(--jdp-card-width);
-  margin: calc(58px * var(--jdp-space)) auto 96px;
+  margin: calc(96px * var(--jdp-space)) auto 96px;
   padding: 0 28px;
   font-family: var(--jdp-font-card) !important;
   font-size: var(--jdp-card-size) !important;
@@ -139,7 +139,7 @@ html.jdp-cards #qa a.hint {
   display: inline-block;
   margin: 0.5em 0.2em 0;
   padding: 0.25em 0.9em;
-  border-radius: 999px;
+  border-radius: var(--jdp-radius-pill);
   font-family: var(--jdp-font-display);
   font-size: 0.62em;
   font-weight: 600;

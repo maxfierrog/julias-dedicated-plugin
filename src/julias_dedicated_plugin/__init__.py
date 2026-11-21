@@ -10,7 +10,6 @@ import os
 
 from aqt import gui_hooks, mw
 from aqt.qt import QEvent, QObject, Qt, QTimer, QWidget
-from aqt.toolbar import HideMode
 
 from . import briefing, session, stats, web
 from .version import __version__
@@ -40,7 +39,11 @@ def _guard(fn):
 @_guard
 def _on_deck_browser(deck_browser, content) -> None:
     s = web.settings()
-    extra = briefing.deck_actions() if s["modules"]["theme"] else ""
+    extra = (
+        briefing.deck_actions() + briefing.deck_progress_script(mw.col)
+        if s["modules"]["theme"]
+        else ""
+    )
     if s["modules"]["briefing"]:
         extra += briefing.home_html(mw.col, s)
     content.stats = extra + content.stats
@@ -86,7 +89,9 @@ def _push_session() -> None:
 @_guard
 def _on_state_change(new_state, old_state) -> None:
     global _session
-    if new_state != "review":
+    if new_state == "review":
+        _hide_top_bar_for_review()
+    else:
         _session = None
 
 
@@ -105,10 +110,25 @@ def _on_show_question(card) -> None:
 
 @_guard
 def apply_focus_mode() -> None:
-    on = web.settings()["session"]["focus_mode"]
-    mw.pm.set_hide_top_bar(on)
-    if on:
-        mw.pm.set_top_bar_hide_mode(HideMode.ALWAYS)
+    """Focus mode keeps the top bar hidden for the whole review session.
+
+    We deliberately don't use Anki's own auto-hide: it re-shows the bar
+    whenever the mouse leaves the card (e.g. moving to the answer buttons),
+    which feels random. Anki's preference is switched off and we hide the
+    bar ourselves on entering review; Anki shows it again on leaving."""
+    if web.settings()["session"]["focus_mode"]:
+        mw.pm.set_hide_top_bar(False)
+    if mw.state == "review":
+        _hide_top_bar_for_review()
+
+
+def _hide_top_bar_for_review() -> None:
+    if mw.state != "review":
+        return
+    if web.settings()["session"]["focus_mode"]:
+        mw.toolbarWeb.hide()
+    else:
+        mw.toolbarWeb.show()
 
 
 # --- Messages from our web UI -------------------------------------------

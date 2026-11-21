@@ -13,6 +13,28 @@ from aqt.theme import theme_manager
 from . import theme
 
 _originals: dict[str, dict] = {}
+_registered: set[str] = set()
+
+
+def _qt_family(settings: dict) -> str | None:
+    """Her interface font as a Qt family, registering it on first use."""
+    import os
+
+    from aqt.qt import QFontDatabase
+
+    family = theme.QT_FONT_FAMILIES.get(settings["theme"]["ui_font"])
+    if family and family not in _registered:
+        path = os.path.join(
+            os.path.dirname(__file__),
+            "web",
+            "fonts",
+            "ttf",
+            theme.QT_FONT_FILES[family],
+        )
+        if QFontDatabase.addApplicationFont(path) < 0:
+            return None
+        _registered.add(family)
+    return family
 
 
 def _rgba(hex_color: str, alpha: float) -> str:
@@ -98,8 +120,12 @@ def qss(settings: dict, dark: bool) -> str:
     custom = settings["theme"]["accent"]
     accent = custom if theme.valid_hex(custom) else p.accent
     soft = _rgba(accent, 0.18)
-    r = max(4, min(10, int(settings["theme"]["radius"]) // 2))
-    return f"""
+    # Follows the corner setting (0 = square), a little tighter than the
+    # main screens since these controls are small and dense.
+    r = round(int(settings["theme"]["radius"]) * 0.6)
+    family = _qt_family(settings)
+    font = f'QWidget {{ font-family: "{family}"; }}' if family else ""
+    return font + f"""
 QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox, QDateEdit, QPlainTextEdit,
 QTextEdit {{
     border: 1px solid {p.border};

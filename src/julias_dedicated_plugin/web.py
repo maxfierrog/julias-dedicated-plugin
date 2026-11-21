@@ -79,12 +79,26 @@ def _tokens_only_js(s: dict) -> str:
     """For Anki's functional screens (editor, deck options, stats, card
     info...): only our palette tokens, which Anki's own CSS already uses. No
     layout or font changes; those screens keep their shape."""
-    css = json.dumps(theme.tokens_css(s) + theme.bootstrap_css(s))
+    css = json.dumps(
+        theme.tokens_css(s) + theme.bootstrap_css(s) + _FUNCTIONAL_FONT
+    )
+    fonts = json.dumps(url("fonts.css"))
     return (
         "(function(){let t=document.getElementById('jdp-tokens');"
         "if(!t){t=document.createElement('style');t.id='jdp-tokens';"
-        f"document.head.appendChild(t);}}t.textContent={css};}})();"
+        f"document.head.appendChild(t);}}t.textContent={css};"
+        "if(!document.getElementById('jdp-fonts')){const l=document.createElement('link');"
+        f"l.id='jdp-fonts';l.rel='stylesheet';l.href={fonts};document.head.appendChild(l);}}"
+        "})();"
     )
+
+
+# Her interface font on functional screens. Field contents in the editor keep
+# their note type's own font (set inline), so study material is untouched.
+_FUNCTIONAL_FONT = (
+    "html body, html body button, html body input, html body select,"
+    "html body textarea{font-family:var(--jdp-font-ui);}"
+)
 
 
 def on_webview_did_inject_style(webview) -> None:
@@ -100,9 +114,10 @@ def on_webview_will_set_content(web_content: WebContent, context) -> None:
         # A functional screen we don't redesign: palette tokens only.
         s = settings()
         if s["modules"]["theme"] and mw.col is not None:
+            web_content.css.append(url("fonts.css"))
             web_content.head += (
                 f"<style id='jdp-tokens'>{theme.tokens_css(s)}"
-                f"{theme.bootstrap_css(s)}</style>"
+                f"{theme.bootstrap_css(s)}{_FUNCTIONAL_FONT}</style>"
             )
         return
     s = settings()

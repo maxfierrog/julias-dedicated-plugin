@@ -1,83 +1,83 @@
-/* Reviewer top row. The exit is always there (focus mode hides Anki's
-   toolbar); progress and time follow the session module switch. */
+/* Review screen header, aligned with the card column. The exit is always
+   there (focus mode hides Anki's toolbar); progress follows the session
+   module switch. */
 #jdp-session {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 50;
-  font-family: var(--jdp-font-display);
   pointer-events: none;
+  font-family: var(--jdp-font-ui);
 }
-.jdp-session-row {
+.jdp-session-inner {
+  box-sizing: border-box;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 14px;
-  padding: 10px 14px 0;
+  width: min(calc(var(--jdp-card-width) + 4rem), 100%);
+  margin: 0 auto;
+  padding: 16px 20px 0;
 }
 #jdp-session button {
   pointer-events: auto;
-  font-family: var(--jdp-font-display);
+  font-family: var(--jdp-font-ui);
   font-weight: 700;
   cursor: pointer;
 }
 #jdp-session .jdp-exit {
   flex: none;
-  padding: 4px 12px;
-  font-size: 12.5px;
+  padding: 6px 14px;
+  font-size: 14px;
   color: var(--jdp-subtle);
   background: var(--jdp-elevated);
   border: 2px solid var(--jdp-border-subtle);
-  border-radius: 999px;
+  border-radius: var(--jdp-radius-pill);
   box-shadow: 0 2px 0 var(--jdp-border-subtle);
   transition: transform 0.25s var(--jdp-bounce), color 0.2s;
 }
 #jdp-session .jdp-exit:hover {
   color: var(--jdp-accent);
-  transform: translateX(-2px);
+}
+.jdp-progress {
+  flex: 1;
+  min-width: 0;
+  padding-top: 9px;
+}
+.jdp-progress[hidden] {
+  display: block;
+  visibility: hidden;
 }
 .jdp-track {
   position: relative;
-  flex: 1;
-  max-width: 30rem;
-  margin: 0 auto;
-  height: 22px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--jdp-fg) 6%, var(--jdp-canvas));
-  border: 2px solid var(--jdp-border-subtle);
+  height: 12px;
+  border-radius: var(--jdp-radius-pill);
+  background: color-mix(in srgb, var(--jdp-fg) 8%, var(--jdp-canvas));
   overflow: hidden;
 }
 .jdp-track[hidden] {
-  visibility: hidden;
-  display: block;
+  display: none;
 }
 .jdp-track i {
   position: absolute;
   inset: 0 auto 0 0;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--jdp-accent) 75%, var(--jdp-sun));
+  border-radius: var(--jdp-radius-pill);
+  background: var(--jdp-accent);
   transition: width 0.6s var(--jdp-bounce);
 }
-.jdp-track span {
-  position: relative;
-  display: block;
+.jdp-caption {
+  margin-top: 7px;
   text-align: center;
-  font-size: 11.5px;
-  font-weight: 700;
-  line-height: 18px;
-  color: var(--jdp-fg);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--jdp-subtle);
   font-variant-numeric: tabular-nums;
 }
-.jdp-time {
-  flex: none;
-  min-width: 92px;
-  text-align: right;
-  font-size: 12.5px;
-  font-weight: 700;
-  color: var(--jdp-faint);
+.jdp-caption b {
+  color: var(--jdp-fg);
+  font-weight: 800;
 }
-html:not(.jdp-session) .jdp-track,
-html:not(.jdp-session) .jdp-time,
+html:not(.jdp-session) .jdp-progress,
 html:not(.jdp-session) .jdp-fatigue {
   visibility: hidden !important;
 }
@@ -90,13 +90,12 @@ html:not(.jdp-session) .jdp-fatigue {
   max-width: min(36rem, 90vw);
   margin: 12px auto 0;
   padding: 8px 8px 8px 14px;
-  font-family: var(--jdp-font-ui);
   font-size: 13.5px;
   line-height: 1.4;
   color: var(--jdp-fg);
   background: color-mix(in srgb, var(--jdp-sun) 14%, var(--jdp-elevated));
   border: 2px solid color-mix(in srgb, var(--jdp-sun) 45%, transparent);
-  border-radius: 999px;
+  border-radius: var(--jdp-radius-pill);
   box-shadow: 0 2px 0 color-mix(in srgb, var(--jdp-sun) 45%, transparent);
   animation: jdp-pop 0.45s var(--jdp-bounce);
 }
@@ -111,7 +110,7 @@ html:not(.jdp-session) .jdp-fatigue {
   width: 26px;
   height: 26px;
   border: none;
-  border-radius: 999px;
+  border-radius: var(--jdp-radius-pill);
   background: color-mix(in srgb, var(--jdp-sun) 22%, transparent);
   color: var(--jdp-subtle);
 }

@@ -2,6 +2,7 @@
 out; hooked up in __init__)."""
 
 import datetime as dt
+import json
 import html
 
 from . import stats
@@ -111,10 +112,7 @@ def _summary_line(col, pace: stats.Pace) -> str:
         return "Nothing due today. Enjoy the break!"
     eta = stats.format_minutes(pace.estimate(new, learn, review))
     cards = "card" if total == 1 else "cards"
-    line = f"You have <b>{total} {cards}</b> today, about <b>{eta}</b>."
-    if done.answers:
-        line += f" <span class='jdp-muted'>{done.answers} done so far.</span>"
-    return line
+    return f"You have <b>{total} {cards}</b> today, about <b>{eta}</b>."
 
 
 def _tile(kind: str, icon: str, title: str, body: str) -> str:
@@ -244,6 +242,30 @@ def _link(cmd: str, label: str, key: str = "") -> str:
     return (
         f"<button class='jdp-link'{title} "
         f"onclick=\"pycmd('{cmd}');return false;\">{label}</button>"
+    )
+
+
+def deck_progress_script(col) -> str:
+    """A thin line under each deck name showing today's progress for that
+    deck. Only for decks she has started today."""
+    data = {
+        str(did): [done, rem]
+        for did, (done, rem) in stats.deck_progress(col).items()
+        if done
+    }
+    return (
+        "<script>(function(){const p="
+        + json.dumps(data)
+        + ";function go(){document.querySelectorAll('tr.deck').forEach(r=>{"
+        "const d=p[r.id];const c=r.querySelector('td.decktd');"
+        "if(!d||!c||c.querySelector('.jdp-deckbar'))return;"
+        "const t=d[0]+d[1],b=document.createElement('div');"
+        "b.className='jdp-deckbar'+(d[1]===0?' jdp-done':'');"
+        "b.title=d[0]+' of '+t+' done today';"
+        "b.innerHTML='<i style=\"width:'+Math.round(100*d[0]/t)+'%\"></i>';"
+        "c.appendChild(b);});}"
+        "document.readyState==='loading'?"
+        "document.addEventListener('DOMContentLoaded',go):go();})();</script>"
     )
 
 

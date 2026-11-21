@@ -72,3 +72,16 @@ def test_history_and_streak(seeded_col):
 )
 def test_format_minutes(seconds, text):
     assert stats.format_minutes(seconds) == text
+
+
+def test_deck_progress_counts_today(seeded_col):
+    col = seeded_col
+    prog = stats.deck_progress(col)
+    mcat = col.decks.id("MCAT")
+    done, remaining = prog[mcat]
+    assert done == 0 and remaining > 0  # seed leaves today unstudied
+    col.decks.select(mcat)
+    card = col.sched.getCard()
+    col.sched.answerCard(card, 3)
+    done2, _ = stats.deck_progress(col)[mcat]
+    assert done2 == 1

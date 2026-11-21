@@ -17,7 +17,7 @@ FEEDBACK_URL = (
 )
 
 # Settings whose change alters page markup, not just tokens/classes.
-_RERENDER_PREFIXES = ("modules.", "briefing.", "name", "theme.ui_font")
+_RERENDER_PREFIXES = ("modules.", "briefing.", "name")
 
 _dialog: "SettingsDialog | None" = None
 

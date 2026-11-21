@@ -37,7 +37,7 @@ html.jdp button {
   color: var(--jdp-fg) !important;
   background: var(--jdp-elevated) !important;
   border: 2px solid var(--jdp-border) !important;
-  border-radius: 999px !important;
+  border-radius: var(--jdp-radius-pill) !important;
   box-shadow: 0 2px 0 var(--jdp-border) !important;
   padding: calc(6px * var(--jdp-space)) calc(16px * var(--jdp-space));
   transition: transform 0.25s var(--jdp-bounce), box-shadow 0.2s,
@@ -45,7 +45,7 @@ html.jdp button {
   cursor: pointer;
 }
 html.jdp button:hover {
-  transform: translateY(-1px);
+  border-color: var(--jdp-subtle) !important;
 }
 html.jdp button:active {
   transform: translateY(1px);
@@ -64,9 +64,7 @@ html.jdp #study {
 }
 html.jdp button.jdp-primary:hover,
 html.jdp #study:hover {
-  transform: translateY(-2px) rotate(-1deg);
-  box-shadow: 0 5px 0 color-mix(in srgb, var(--jdp-accent) 60%, black),
-    0 8px 24px color-mix(in srgb, var(--jdp-accent) 40%, transparent) !important;
+  filter: brightness(1.06);
 }
 html.jdp button.jdp-primary:active,
 html.jdp #study:active {
@@ -95,7 +93,7 @@ html.jdp-ctx-toolbar .toolbar {
   display: inline-flex;
   gap: 2px;
   padding: 4px;
-  border-radius: 999px;
+  border-radius: var(--jdp-radius-pill);
   background: var(--jdp-elevated);
   border: 2px solid var(--jdp-border-subtle);
 }
@@ -105,7 +103,7 @@ html.jdp-ctx-toolbar .hitem {
   font-weight: 700;
   color: var(--jdp-subtle) !important;
   padding: 4px 15px !important;
-  border-radius: 999px;
+  border-radius: var(--jdp-radius-pill);
   text-decoration: none;
   transition: background 0.2s, color 0.2s;
 }
@@ -133,6 +131,13 @@ html.jdp-ctx-bottombar body > * {
 html.jdp-ctx-reviewer-bottom body {
   background: var(--jdp-canvas);
   border-top: none !important;
+  /* Room above for the shortcut badges, and a real gap below the buttons. */
+  padding: 12px 0 18px !important;
+}
+/* Edit / More sit beside the answer buttons, not in the far corners. */
+html.jdp-ctx-reviewer-bottom #innertable {
+  width: min(calc(var(--jdp-card-width) + 4rem), 100%) !important;
+  margin: 0 auto;
 }
 
 /* ---- Home ---------------------------------------------------------------- */
@@ -197,6 +202,7 @@ html.jdp-ctx-deckbrowser .jdp-deck-actions {
   position: relative;
   z-index: 1;
 }
+
 html.jdp-ctx-deckbrowser .jdp-hello h1 {
   margin: 0 0 4px;
   font-size: 34px;
@@ -245,7 +251,7 @@ html.jdp button.jdp-cta {
 html.jdp button.jdp-cta small {
   min-width: 22px;
   padding: 2px 8px;
-  border-radius: 999px;
+  border-radius: var(--jdp-radius-pill);
   font-size: 13px;
   background: color-mix(in srgb, var(--jdp-on-accent) 22%, transparent);
 }
@@ -260,7 +266,6 @@ html.jdp button.jdp-icon {
 }
 html.jdp button.jdp-icon:hover {
   color: var(--jdp-accent) !important;
-  transform: rotate(45deg);
 }
 
 /* Deck list */
@@ -299,10 +304,10 @@ html.jdp-ctx-deckbrowser tr.deck td {
   transition: background 0.2s;
 }
 html.jdp-ctx-deckbrowser tr.deck td:first-child {
-  border-radius: 999px 0 0 999px;
+  border-radius: var(--jdp-radius-pill) 0 0 var(--jdp-radius-pill);
 }
 html.jdp-ctx-deckbrowser tr.deck td:last-child {
-  border-radius: 0 999px 999px 0;
+  border-radius: 0 var(--jdp-radius-pill) var(--jdp-radius-pill) 0;
 }
 html.jdp-ctx-deckbrowser tr.deck.current td {
   background: color-mix(in srgb, var(--jdp-accent) 7%, transparent) !important;
@@ -326,7 +331,7 @@ html.jdp-ctx-deckbrowser a.collapse {
   width: 18px;
   height: 18px;
   margin-right: 6px;
-  border-radius: 999px;
+  border-radius: var(--jdp-radius-pill);
   font-size: 12px;
   font-weight: 800;
   text-decoration: none;
@@ -343,7 +348,7 @@ html.jdp-ctx-deckbrowser .zero-count {
   display: inline-block;
   min-width: 2.4em;
   padding: 2px 8px;
-  border-radius: 999px;
+  border-radius: var(--jdp-radius-pill);
   font-family: var(--jdp-font-display);
   font-size: 13px;
   font-weight: 700;
@@ -372,6 +377,24 @@ html.jdp-ctx-deckbrowser .gears {
 }
 html.jdp-ctx-deckbrowser tr.deck:hover .gears {
   opacity: 0.5;
+}
+/* Today's progress per deck: a quiet line under the deck name. */
+.jdp-deckbar {
+  height: 3px;
+  max-width: 9rem;
+  margin: 5px 0 1px 24px;
+  border-radius: var(--jdp-radius-pill);
+  background: color-mix(in srgb, var(--jdp-fg) 8%, transparent);
+  overflow: hidden;
+}
+.jdp-deckbar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: color-mix(in srgb, var(--jdp-accent) 70%, transparent);
+}
+.jdp-deckbar.jdp-done i {
+  background: var(--jdp-review);
 }
 .jdp-deck-actions {
   display: flex;
@@ -466,7 +489,7 @@ html.night-mode .jdp-tile {
 .jdp-bar i {
   width: 100%;
   max-width: 22px;
-  border-radius: 999px;
+  border-radius: var(--jdp-radius-pill);
   background: color-mix(in srgb, var(--jdp-accent) 38%, transparent);
   transform-origin: bottom;
   animation: jdp-grow 0.7s var(--jdp-bounce) both;
@@ -504,7 +527,7 @@ html.night-mode .jdp-tile {
 }
 .jdp-heatmap i {
   aspect-ratio: 1;
-  border-radius: 999px;
+  border-radius: calc(var(--jdp-round) * 100%);
   background: color-mix(in srgb, var(--jdp-fg) 7%, transparent);
 }
 .jdp-heatmap i.l1 { background: color-mix(in srgb, var(--jdp-accent) 30%, transparent); }
@@ -621,7 +644,7 @@ html.jdp-ctx-reviewer-bottom #middle button[data-ease="3"] {
   box-shadow: 0 3px 0 color-mix(in srgb, var(--jdp-accent) 60%, black) !important;
 }
 html.jdp-ctx-reviewer-bottom #middle button[data-ease]:hover {
-  transform: translateY(-2px);
+  filter: brightness(1.06);
 }
 html.jdp-ctx-reviewer-bottom #middle button[data-ease]::after {
   content: attr(data-ease);
@@ -630,7 +653,7 @@ html.jdp-ctx-reviewer-bottom #middle button[data-ease]::after {
   right: -6px;
   width: 17px;
   height: 17px;
-  border-radius: 999px;
+  border-radius: var(--jdp-radius-pill);
   font-family: var(--jdp-font-display);
   font-size: 10.5px;
   font-weight: 700;
@@ -660,8 +683,10 @@ html.jdp-ctx-reviewer-bottom .new-count { color: var(--jdp-new); }
 html.jdp-ctx-reviewer-bottom .learn-count { color: var(--jdp-learn); }
 html.jdp-ctx-reviewer-bottom .review-count { color: var(--jdp-review); }
 html.jdp-ctx-reviewer-bottom td.stat button {
+  padding: 7px 14px !important;
+  font-size: 13.5px;
   background: transparent !important;
-  border-color: transparent !important;
+  border-color: var(--jdp-border-subtle) !important;
   box-shadow: none !important;
   color: var(--jdp-subtle) !important;
 }
