@@ -180,7 +180,7 @@ def _short_deck(name: str) -> str:
 def _w_forecast(col, settings, cols=1, rows=1) -> str:
     days = stats.forecast(col, 14 if cols >= 3 else 7)
     peak = max(days) or 1
-    today = dt.date.today()
+    today = stats.anki_today(col)
     bars = []
     for i, n in enumerate(days):
         day = today + dt.timedelta(days=i)
@@ -238,7 +238,7 @@ def _w_streak(col, settings, cols=1, rows=1) -> str:
 
 def _w_heatmap(col, settings, cols=1, rows=1) -> str:
     # Columns are weeks (Mon..Sun), ending with the current week.
-    today = dt.date.today()
+    today = stats.anki_today(col)
     weeks = WEEKS if cols >= 3 else 24  # same dot size at both widths
     days = weeks * 7 - (6 - today.weekday())
     counts = stats.daily_counts(col, days)
@@ -308,9 +308,9 @@ def _w_backlog(col, settings, cols=1, rows=1) -> str:
             center=True,
         )
     else:
-        by = (dt.date.today() + dt.timedelta(days=b.days_to_clear)).strftime(
-            "%a"
-        )
+        by = (
+            stats.anki_today(col) + dt.timedelta(days=b.days_to_clear)
+        ).strftime("%a")
         when = "tomorrow" if b.days_to_clear == 1 else f"by {by}"
         body = (
             f"<div class='jdp-big'>{b.overdue}</div>"
@@ -337,7 +337,7 @@ def _w_finish_line(col, settings, cols=1, rows=1) -> str:
         if f.days_left is None:
             when = "<span class='jdp-muted'>paused</span>"
         else:
-            date = dt.date.today() + dt.timedelta(days=f.days_left)
+            date = stats.anki_today(col) + dt.timedelta(days=f.days_left)
             label = (
                 f"{date:%b} {date.day}"
                 if f.days_left < 300
@@ -408,7 +408,7 @@ def _w_timeline(col, settings, cols=3, rows=1) -> str:
     """One quiet line: today on the left, a dot per upcoming event with a
     short countdown above it. Details (name, date, deck) appear on hover;
     clicking an event linked to a deck studies that deck."""
-    today = dt.date.today()
+    today = stats.anki_today(col)
     upcoming = []
     for i, e in enumerate(settings["home"]["events"]):
         try:

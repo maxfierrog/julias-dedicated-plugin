@@ -8,6 +8,9 @@ Day boundaries follow Anki's: a day starts at the "next day starts at" hour
 from dataclasses import dataclass
 
 DAY = 86_400
+# Revlog rows that are real answers (not Forget/Set due date/reschedule rows,
+# which have type >= 4 and ease 0).
+ANSWER = "type in (0, 1, 2, 3) and ease > 0"
 DEFAULT_SECONDS_PER_ANSWER = 10.0
 DEFAULT_ANSWERS_PER_NEW = 2.5
 MAX_ANSWER_SECONDS = 60.0
@@ -39,7 +42,7 @@ def pace(col, days: int = 14) -> Pace:
     since_ms = _day_start(col, days - 1) * 1000
     row = col.db.first(
         "select count(), avg(min(time, ?)) from revlog "
-        "where id >= ? and type in (0, 1, 2, 3) and time > 0",
+        f"where id >= ? and {ANSWER} and time > 0",
         MAX_ANSWER_SECONDS * 1000,
         since_ms,
     )
@@ -55,10 +58,12 @@ def pace(col, days: int = 14) -> Pace:
         """
         select avg(n) from (
           select count() n from revlog r
-          where r.id >= ? and r.id < (
+          where r.id >= ? and r.type in (0, 1, 2, 3) and r.ease > 0 and r.id < (
             select min(id) from revlog r2 where r2.cid = r.cid
+              and r2.type in (0, 1, 2, 3) and r2.ease > 0
           ) + ? and r.cid in (
-            select cid from revlog group by cid having min(id) >= ?
+            select cid from revlog where type in (0, 1, 2, 3) and ease > 0
+            group by cid having min(id) >= ?
           )
           group by r.cid
         )""",
@@ -94,8 +99,8 @@ def forecast(col, days: int = 7) -> list[int]:
     today = col.sched.today
     out = [0] * days
     for offset, count in col.db.all(
-        "select max(due - ?, 0), count() from cards "
-        "where queue in (2, 3) and due < ? group by 1",
+        "select max(d - ?, 0), count() from (select case when odid then odue "
+        "else due end d from cards where queue in (2, 3)) where d < ? group by 1",
         today,
         today + days,
     ):
@@ -131,7 +136,7 @@ def daily_counts(col, days: int) -> list[int]:
     out = [0] * days
     for idx, count in col.db.all(
         "select (id / 1000 - ?) / ?, count() from revlog "
-        "where id >= ? and id < ? group by 1",
+        f"where id >= ? and id < ? and {ANSWER} group by 1",
         since,
         DAY,
         since * 1000,
@@ -151,7 +156,10 @@ class Streak:
     studied_today: bool
 
 
-def streak(col, days: int = 365) -> Streak:
+def streak(col, days: int | None = None) -> Streak:
+    if days is None:  # all of her history, so a long-ago best isn't lost
+        first = col.db.scalar("select min(id) from revlog") or 0
+        days = max(1, (col.sched.day_cutoff - first // 1000) // DAY + 1)
     counts = daily_counts(col, days)
     studied_today = counts[-1] > 0
     current = 0
@@ -174,10 +182,18 @@ class Today:
 
 def today(col) -> Today:
     row = col.db.first(
-        "select count(), sum(time) from revlog where id >= ?",
+        f"select count(), sum(min(time, 60000)) from revlog where id >= ? and {ANSWER}",
         _day_start(col) * 1000,
     )
     return Today(row[0] or 0, (row[1] or 0) / 1000)
+
+
+def anki_today(col):
+    """The calendar date Anki considers today (before the "next day starts
+    at" hour, that's still yesterday's date)."""
+    import datetime as dt
+
+    return dt.date.fromtimestamp(col.sched.day_cutoff - DAY)
 
 
 def format_minutes(seconds: float) -> str:
@@ -195,8 +211,10 @@ def deck_progress(col) -> dict[int, tuple[int, int]]:
     answered today, cards still due today)}."""
     done_by_did: dict[int, int] = {}
     for did, n in col.db.all(
-        "select case when c.odid then c.odid else c.did end, count(distinct r.cid) "
-        "from revlog r join cards c on c.id = r.cid where r.id >= ? group by 1",
+        # Credit the deck the card is in now, matching the remaining counts.
+        "select c.did, count(distinct r.cid) from revlog r join cards c on "
+        "c.id = r.cid where r.id >= ? and r.type in (0, 1, 2, 3) and r.ease > 0 "
+        "group by 1",
         _day_start(col) * 1000,
     ):
         done_by_did[did] = n
@@ -223,7 +241,7 @@ def minutes_by_day(col, days: int) -> list[float]:
     out = [0.0] * days
     for idx, ms in col.db.all(
         "select (id / 1000 - ?) / ?, sum(min(time, ?)) from revlog "
-        "where id >= ? and id < ? group by 1",
+        f"where id >= ? and id < ? and {ANSWER} group by 1",
         since,
         DAY,
         MAX_ANSWER_SECONDS * 1000,
@@ -277,7 +295,9 @@ def backlog(col) -> Backlog:
     usual daily reviews (at least 10) on top of what's due anyway."""
     today = col.sched.today
     overdue = col.db.scalar(
-        "select count() from cards where queue in (2, 3) and due < ?", today
+        "select count() from cards where queue in (2, 3) and "
+        "(case when odid then odue else due end) < ?",
+        today,
     )
     recent = daily_counts(col, 14)
     typical = sum(recent) / max(1, sum(1 for c in recent if c))
@@ -305,14 +325,20 @@ def finish_lines(col, window: int = 14) -> list[FinishLine]:
         dids = [node.deck_id] + [d for _, d in col.decks.children(node.deck_id)]
         ids = ",".join(str(d) for d in dids)
         unseen = col.db.scalar(
-            f"select count() from cards where queue = 0 and did in ({ids})"
+            "select count() from cards where type = 0 and "
+            f"(case when odid then odid else did end) in ({ids})"
         )
         if not unseen:
             continue
-        total = col.db.scalar(f"select count() from cards where did in ({ids})")
+        total = col.db.scalar(
+            "select count() from cards where "
+            f"(case when odid then odid else did end) in ({ids})"
+        )
         introduced = col.db.scalar(
             "select count() from (select r.cid, min(r.id) first from revlog r "
-            f"join cards c on c.id = r.cid where c.did in ({ids}) "
+            "join cards c on c.id = r.cid where "
+            f"(case when c.odid then c.odid else c.did end) in ({ids}) "
+            "and r.type in (0, 1, 2, 3) and r.ease > 0 "
             "group by r.cid) where first >= ?",
             since_ms,
         )
@@ -344,8 +370,9 @@ def new_card_cost(col) -> NewCardCost | None:
     row = col.db.first(
         "select count(), sum(n) from (select f.cid, ("
         "  select count() from revlog r where r.cid = f.cid "
-        "  and r.id < f.first + ?) n "
-        "from (select cid, min(id) first from revlog group by cid) f "
+        "  and r.type in (0, 1, 2, 3) and r.ease > 0 and r.id < f.first + ?) n "
+        "from (select cid, min(id) first from revlog "
+        "      where type in (0, 1, 2, 3) and ease > 0 group by cid) f "
         "where f.first >= ? and f.first < ?)",
         30 * DAY * 1000,
         lo,

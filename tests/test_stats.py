@@ -120,3 +120,47 @@ def test_new_card_cost(seeded_col):
     assert cost is not None
     assert 2 < cost.reviews_first_month < 15
     assert cost.minutes_per_day(20) > 0
+
+
+def test_reschedules_are_not_studying(seeded_col):
+    """Set due date / Forget write revlog rows (type 4, ease 0): not answers."""
+    col = seeded_col
+    before_today, before_streak = stats.today(col), stats.streak(col)
+    new_ids = col.db.list("select id from cards where type = 0 limit 50")
+    col.sched.set_due_date(new_ids, "5")
+    assert stats.today(col).answers == before_today.answers == 0
+    assert (
+        stats.streak(col).studied_today is before_streak.studied_today is False
+    )
+    assert stats.daily_counts(col, 1) == [0]
+
+
+def test_filtered_deck_cards_keep_their_real_due_date(seeded_col):
+    col = seeded_col
+    f0, b0 = stats.forecast(col, 7), stats.backlog(col).overdue
+    did = col.decks.new_filtered("Cram")
+    deck = col.decks.get(did)
+    deck["terms"] = [["is:review", 9999, 0]]
+    col.decks.save(deck)
+    col.sched.rebuild_filtered_deck(did)
+    assert col.db.scalar("select count() from cards where odid != 0") > 0
+    assert stats.forecast(col, 7) == f0
+    assert stats.backlog(col).overdue == b0
+
+
+def test_finish_line_ignores_suspended_and_buried_as_seen(seeded_col):
+    col = seeded_col
+    mcat = next(f for f in stats.finish_lines(col) if f.name == "MCAT")
+    new_ids = col.db.list(
+        "select id from cards where type = 0 and did in (select id from decks "
+        "where name like 'MCAT%') limit 6"
+    )
+    col.sched.suspend_cards(new_ids[:3])
+    col.sched.bury_cards(new_ids[3:])
+    after = next(f for f in stats.finish_lines(col) if f.name == "MCAT")
+    assert after.unseen == mcat.unseen and after.total == mcat.total
+
+
+def test_best_streak_uses_full_history(seeded_col):
+    s = stats.streak(seeded_col)
+    assert s.longest == stats.streak(seeded_col, days=365).longest  # <1y data
