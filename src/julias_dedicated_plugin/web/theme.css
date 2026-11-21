@@ -426,6 +426,11 @@ html.jdp-ctx-deckbrowser .zero-count {
   color: var(--jdp-faint);
   font-weight: 600;
 }
+html.jdp-ctx-deckbrowser td.opts a {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 html.jdp-ctx-deckbrowser .gears {
   opacity: 0;
   transition: opacity 0.2s;
@@ -439,8 +444,11 @@ html.jdp-ctx-deckbrowser td.jdp-today-cell {
   width: 4.6rem;
   text-align: center;
 }
+/* Block-level flex so the table cell centers it exactly (inline content
+   aligns to the text baseline instead). */
 .jdp-today {
-  display: inline-flex;
+  display: flex;
+  justify-content: center;
   align-items: center;
   gap: 5px;
   font-family: var(--jdp-font-ui);
