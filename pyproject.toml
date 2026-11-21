@@ -1,0 +1,42 @@
+[project]
+name = "better-reviewer"
+description = "An Anki add-on that improves the everyday review experience."
+authors = [{ name = "Max Fierro" }]
+version = "0.1.0"
+readme = "README.md"
+license = "MIT"
+# Must match the Python that Anki embeds (26.09.x ships CPython 3.13).
+requires-python = ">=3.13,<3.14"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    # Pinned to the Anki release we target, for imports/typing/headless tests.
+    "anki==26.9.4",
+    "aqt[qt6]==26.9.4",
+    "black>=25",
+    "pytest>=8",
+]
+
+[project.scripts]
+anki-dev = "devtools.scripts:run"
+link = "devtools.scripts:link"
+unlink = "devtools.scripts:unlink"
+package = "devtools.scripts:package"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/devtools"]
+
+[build-system]
+requires = ["hatchling>=1.13,<2"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+package = true
+
+[tool.black]
+line-length = 80
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
