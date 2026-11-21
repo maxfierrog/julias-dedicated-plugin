@@ -80,7 +80,6 @@
     const rect = w.getBoundingClientRect();
     const { colW, gap } = slot();
     const rowH = (rect.height - gap * (r0 - 1)) / r0;
-    w.draggable = false;
     w.classList.add("jdp-resizing");
     const badge = document.createElement("span");
     badge.className = "jdp-w-badge";
@@ -110,8 +109,7 @@
       document.documentElement.style.cursor = "";
       w.classList.remove("jdp-resizing");
       badge.remove();
-      w.draggable = true;
-      if (w.dataset.size !== start) {
+        if (w.dataset.size !== start) {
         save();
         rerenderEditing();
       }
@@ -122,7 +120,6 @@
 
   // ---- Edit mode -------------------------------------------------------
   function decorate(w) {
-    w.draggable = true;
     if (!$(".jdp-w-remove", w)) {
       const x = document.createElement("button");
       x.type = "button";
@@ -151,7 +148,6 @@
   }
 
   function undecorate(w) {
-    w.draggable = false;
     $(".jdp-w-remove", w)?.remove();
     $$(".jdp-w-handle", w).forEach((h) => h.remove());
   }
@@ -210,30 +206,101 @@
     }
   }
 
-  // ---- Drag to reorder -------------------------------------------------
-  function onDragStart(e) {
-    const w = e.target.closest?.(".jdp-widget");
-    if (!editing || !w) return;
-    dragging = w;
-    w.classList.add("jdp-dragging");
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", w.dataset.id);
+  // ---- Drag to reorder ---------------------------------------------------
+  // Pointer events (Anki's web views reject HTML5 drag-and-drop): a floating
+  // copy follows the pointer, the widget's own slot stays as a placeholder,
+  // and the others slide out of the way (FLIP animation).
+  const DRAG_THRESHOLD = 6;
+  let pending = null; // { w, x, y } before the threshold is passed
+  let drag = null; // { w, ghost, dx, dy }
+
+  function flip(mutate) {
+    const items = $$(".jdp-grid > .jdp-widget");
+    const before = new Map(items.map((el) => [el, el.getBoundingClientRect()]));
+    mutate();
+    for (const el of items) {
+      if (drag && el === drag.w) continue;
+      const a = before.get(el);
+      const b = el.getBoundingClientRect();
+      const dx = a.left - b.left;
+      const dy = a.top - b.top;
+      if (!dx && !dy) continue;
+      el.animate(
+        [{ transform: `translate(${dx}px, ${dy}px)` }, { transform: "none" }],
+        { duration: 180, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" },
+      );
+    }
   }
 
-  function onDragOver(e) {
-    if (!dragging) return;
+  function onPointerDown(e) {
+    if (!editing || e.button !== 0) return;
+    if (e.target.closest(".jdp-w-handle, .jdp-w-remove, button, input, select")) return;
+    const w = e.target.closest(".jdp-grid > .jdp-widget");
+    if (!w) return;
+    pending = { w, x: e.clientX, y: e.clientY };
+  }
+
+  function startDrag(e) {
+    const { w } = pending;
+    pending = null;
+    const r = w.getBoundingClientRect();
+    const ghost = w.cloneNode(true);
+    ghost.classList.add("jdp-ghost");
+    $$(".jdp-w-handle, .jdp-w-remove", ghost).forEach((x) => x.remove());
+    Object.assign(ghost.style, {
+      width: r.width + "px",
+      height: r.height + "px",
+      left: r.left + "px",
+      top: r.top + "px",
+    });
+    document.body.appendChild(ghost);
+    w.classList.add("jdp-placeholder");
+    document.documentElement.classList.add("jdp-reordering");
+    drag = { w, ghost, dx: e.clientX - r.left, dy: e.clientY - r.top };
+  }
+
+  function onPointerMove(e) {
+    if (pending) {
+      const moved = Math.hypot(e.clientX - pending.x, e.clientY - pending.y);
+      if (moved < DRAG_THRESHOLD) return;
+      startDrag(e);
+    }
+    if (!drag) return;
     e.preventDefault();
-    const target = e.target.closest?.(".jdp-grid > .jdp-widget");
-    if (!target || target === dragging) return;
+    drag.ghost.style.left = e.clientX - drag.dx + "px";
+    drag.ghost.style.top = e.clientY - drag.dy + "px";
+    // Which widget is under the pointer (ignoring the ghost)?
+    const under = document.elementFromPoint(e.clientX, e.clientY);
+    const target = under?.closest(".jdp-grid > .jdp-widget");
+    if (!target || target === drag.w) return;
     const r = target.getBoundingClientRect();
-    const after = e.clientX > r.left + r.width / 2;
-    target[after ? "after" : "before"](dragging);
+    const after =
+      e.clientY > r.bottom - r.height / 4 ||
+      (e.clientX > r.left + r.width / 2 && e.clientY > r.top + r.height / 4);
+    const ref = after ? target.nextElementSibling : target;
+    if (ref === drag.w || (after && target.nextElementSibling === drag.w)) return;
+    flip(() => grid().insertBefore(drag.w, ref));
   }
 
-  function onDragEnd() {
-    if (!dragging) return;
-    dragging.classList.remove("jdp-dragging");
-    dragging = null;
+  function onPointerUp() {
+    pending = null;
+    if (!drag) return;
+    const { w, ghost } = drag;
+    const to = w.getBoundingClientRect();
+    ghost
+      .animate(
+        [
+          { left: ghost.style.left, top: ghost.style.top },
+          { left: to.left + "px", top: to.top + "px" },
+        ],
+        { duration: 160, easing: "ease-out" },
+      )
+      .finished.finally(() => {
+        ghost.remove();
+        w.classList.remove("jdp-placeholder");
+      });
+    document.documentElement.classList.remove("jdp-reordering");
+    drag = null;
     save();
   }
 
@@ -290,9 +357,9 @@
     window.addEventListener("resize", tidyTimeline);
     document.addEventListener("click", onClick);
     document.addEventListener("submit", onSubmit);
-    document.addEventListener("dragstart", onDragStart);
-    document.addEventListener("dragover", onDragOver);
-    document.addEventListener("dragend", onDragEnd);
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("pointermove", onPointerMove);
+    document.addEventListener("pointerup", onPointerUp);
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape" && editing) setEditing(false);
     });

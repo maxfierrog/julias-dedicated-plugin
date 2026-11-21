@@ -975,8 +975,31 @@ html.jdp-editing .jdp-widget:hover .jdp-w-handle,
 html.jdp-editing .jdp-grid > .jdp-widget.jdp-resizing > .jdp-tile {
   outline-style: solid;
 }
-html.jdp-editing .jdp-grid > .jdp-widget.jdp-dragging {
-  opacity: 0.4;
+/* Reordering: the slot stays as a placeholder; a lifted copy follows the
+   pointer. */
+.jdp-widget.jdp-placeholder > * {
+  visibility: hidden;
+}
+.jdp-widget.jdp-placeholder {
+  border: 2px dashed color-mix(in srgb, var(--jdp-accent) 45%, transparent);
+  border-radius: calc(var(--jdp-radius) + 6px);
+  background: color-mix(in srgb, var(--jdp-accent) 5%, transparent);
+}
+.jdp-ghost {
+  position: fixed;
+  z-index: 1000;
+  margin: 0;
+  pointer-events: none;
+  transform: scale(1.02);
+  filter: drop-shadow(0 12px 24px rgb(0 0 0 / 0.18));
+}
+.jdp-ghost > .jdp-tile {
+  outline: none !important;
+}
+html.jdp-reordering,
+html.jdp-reordering * {
+  cursor: grabbing !important;
+  user-select: none;
 }
 html.jdp button.jdp-w-remove {
   position: absolute;
