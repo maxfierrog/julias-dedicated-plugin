@@ -433,23 +433,48 @@ html.jdp-ctx-deckbrowser .gears {
 html.jdp-ctx-deckbrowser tr.deck:hover .gears {
   opacity: 0.5;
 }
-/* Today's progress per deck: a quiet line under the deck name. */
-.jdp-deckbar {
-  height: 3px;
-  max-width: 9rem;
-  margin: 5px 0 1px;
-  border-radius: var(--jdp-radius-pill);
-  background: color-mix(in srgb, var(--jdp-fg) 8%, transparent);
-  overflow: hidden;
+/* "Today" column: a fixed-size progress ring per started deck. */
+html.jdp-ctx-deckbrowser th.jdp-today-col,
+html.jdp-ctx-deckbrowser td.jdp-today-cell {
+  width: 4.6rem;
+  text-align: center;
 }
-.jdp-deckbar i {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: color-mix(in srgb, var(--jdp-accent) 70%, transparent);
+.jdp-today {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--jdp-font-ui);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--jdp-subtle);
+  font-variant-numeric: tabular-nums;
 }
-.jdp-deckbar.jdp-done i {
-  background: var(--jdp-review);
+.jdp-today svg {
+  flex: none;
+}
+.jdp-today .jdp-ring-bg {
+  fill: none;
+  stroke: color-mix(in srgb, var(--jdp-fg) 10%, transparent);
+  stroke-width: 2.6;
+}
+.jdp-today .jdp-ring {
+  fill: none;
+  stroke: var(--jdp-accent);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+}
+.jdp-today.jdp-done {
+  color: var(--jdp-review);
+}
+.jdp-today.jdp-done .jdp-ring {
+  stroke: var(--jdp-review);
+}
+.jdp-today .jdp-check {
+  fill: none;
+  stroke: var(--jdp-review);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 .jdp-deck-actions {
   display: flex;

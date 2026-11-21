@@ -1,5 +1,5 @@
-/* Deck list rows: a chevron expander centered on the whole item, and a thin
-   "today" progress line under the deck name (data from Python, set as
+/* Deck list: a chevron expander centered on each row, and a fixed-size
+   "Today" column with a progress ring (data from Python, set as
    window.JDP_DECK_PROGRESS = {deckId: [done, remaining]}). */
 (function () {
   "use strict";
@@ -41,22 +41,56 @@
     if (name) stack.appendChild(name);
     wrap.appendChild(stack);
 
-    const p = (window.JDP_DECK_PROGRESS || {})[row.id];
-    if (p && p[0]) {
-      const total = p[0] + p[1];
-      const bar = document.createElement("div");
-      bar.className = "jdp-deckbar" + (p[1] === 0 ? " jdp-done" : "");
-      bar.title = `${p[0]} of ${total} done today`;
-      const fill = document.createElement("i");
-      fill.style.width = Math.round((100 * p[0]) / total) + "%";
-      bar.appendChild(fill);
-      stack.appendChild(bar);
-    }
     cell.replaceChildren(wrap);
+  }
+
+  function ring(done, remaining) {
+    const total = done + remaining;
+    const frac = total ? done / total : 0;
+    const r = 7;
+    const c = 2 * Math.PI * r;
+    const finished = remaining === 0;
+    const wrap = document.createElement("span");
+    wrap.className = "jdp-today" + (finished ? " jdp-done" : "");
+    wrap.title = `${done} of ${total} done today`;
+    wrap.innerHTML =
+      `<svg viewBox="0 0 18 18" width="18" height="18" aria-hidden="true">` +
+      `<circle cx="9" cy="9" r="${r}" class="jdp-ring-bg"/>` +
+      `<circle cx="9" cy="9" r="${r}" class="jdp-ring" ` +
+      `stroke-dasharray="${(frac * c).toFixed(2)} ${c.toFixed(2)}" ` +
+      `transform="rotate(-90 9 9)"/>` +
+      (finished
+        ? `<path d="M5.6 9.2l2.2 2.1 4.4-4.6" class="jdp-check"/>`
+        : "") +
+      `</svg><span>${Math.round(frac * 100)}%</span>`;
+    return wrap;
+  }
+
+  function addTodayColumn() {
+    const head = document.querySelector("th.optscol");
+    if (!head || document.querySelector("th.jdp-today-col")) return;
+    const th = document.createElement("th");
+    th.className = "count jdp-today-col";
+    th.textContent = "Today";
+    head.before(th);
+    document.querySelectorAll(".top-level-drag-row td").forEach((td) => {
+      td.colSpan = (td.colSpan || 1) + 1;
+    });
+    const data = window.JDP_DECK_PROGRESS || {};
+    document.querySelectorAll("tr.deck").forEach((row) => {
+      const opts = row.querySelector("td.opts");
+      if (!opts) return;
+      const td = document.createElement("td");
+      td.className = "jdp-today-cell";
+      const p = data[row.id];
+      if (p && p[0]) td.appendChild(ring(p[0], p[1]));
+      opts.before(td);
+    });
   }
 
   function go() {
     document.querySelectorAll("tr.deck").forEach(rebuild);
+    addTodayColumn();
   }
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", go);
