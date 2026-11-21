@@ -1,0 +1,311 @@
+html.jdp-ctx-settings body {
+  margin: 0;
+  padding: 0 0 28px;
+  font-size: 13.5px;
+  background: var(--canvas);
+}
+html.jdp-ctx-settings header {
+  padding: 26px 24px 8px;
+}
+html.jdp-ctx-settings h1 {
+  margin: 0 0 4px;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+html.jdp-ctx-settings header p {
+  margin: 0;
+  color: var(--fg-subtle);
+  font-size: 13px;
+}
+html.jdp-ctx-settings section {
+  margin: 14px 16px 0;
+  padding: 6px 16px 10px;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--jdp-radius);
+}
+html.jdp-ctx-settings h2 {
+  margin: 12px 0 10px;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 44px;
+  padding: 6px 0;
+  border-top: 1px solid var(--border-subtle);
+}
+.label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.label span {
+  font-weight: 550;
+}
+.label small {
+  font-size: 11.5px;
+  color: var(--fg-subtle);
+  line-height: 1.35;
+}
+
+/* Undo the generic button theming for our custom controls */
+html.jdp-ctx-settings .seg button,
+html.jdp-ctx-settings .switch,
+html.jdp-ctx-settings .chip,
+html.jdp-ctx-settings .preset,
+html.jdp-ctx-settings .font {
+  box-shadow: none !important;
+  padding: 0;
+  transform: none;
+}
+
+/* Segmented control */
+.seg {
+  display: inline-flex;
+  flex: none;
+  padding: 2px;
+  border-radius: calc(var(--jdp-radius-sm) + 2px);
+  background: var(--canvas-inset);
+  border: 1px solid var(--border-subtle);
+}
+html.jdp-ctx-settings .seg button {
+  padding: 4px 11px !important;
+  font-size: 12.5px;
+  font-weight: 550;
+  border: none !important;
+  background: transparent !important;
+  color: var(--fg-subtle) !important;
+  border-radius: var(--jdp-radius-sm) !important;
+}
+html.jdp-ctx-settings .seg button.on {
+  background: var(--canvas-elevated) !important;
+  color: var(--fg) !important;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.12) !important;
+}
+
+/* Switch */
+html.jdp-ctx-settings .switch {
+  flex: none;
+  position: relative;
+  width: 38px;
+  height: 22px;
+  border-radius: 999px !important;
+  border: none !important;
+  background: color-mix(in srgb, var(--fg) 18%, transparent) !important;
+  transition: background 0.18s;
+}
+html.jdp-ctx-settings .switch.on {
+  background: var(--jdp-accent) !important;
+}
+.switch i {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: white;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
+  transition: transform 0.18s;
+}
+.switch.on i {
+  transform: translateX(16px);
+}
+
+/* Slider */
+.slider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+}
+.slider input {
+  width: 140px;
+  accent-color: var(--jdp-accent);
+}
+.slider output {
+  min-width: 64px;
+  font-size: 12px;
+  color: var(--fg-subtle);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Presets */
+.presets {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  padding-bottom: 12px;
+}
+html.jdp-ctx-settings .preset {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px !important;
+  background: transparent !important;
+  border: 1.5px solid transparent !important;
+  border-radius: var(--jdp-radius) !important;
+}
+html.jdp-ctx-settings .preset:hover {
+  border-color: var(--border) !important;
+}
+html.jdp-ctx-settings .preset.on {
+  border-color: var(--jdp-accent) !important;
+}
+.preset .swatch {
+  display: flex;
+  height: 54px;
+  border-radius: var(--jdp-radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+}
+.preset .swatch i {
+  flex: 1;
+  position: relative;
+}
+.preset .swatch b {
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  top: 22%;
+  bottom: 22%;
+  border-radius: 4px;
+}
+.preset .swatch em {
+  position: absolute;
+  left: 30%;
+  right: 30%;
+  bottom: 32%;
+  height: 4px;
+  border-radius: 2px;
+}
+.preset .name {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Accent chips */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.row.stack {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  padding: 12px 0;
+}
+html.jdp-ctx-settings .chip {
+  width: 26px;
+  height: 26px;
+  background: var(--c) !important;
+  border-radius: 999px !important;
+  border: 2px solid transparent !important;
+  outline: 2px solid transparent;
+  outline-offset: 1px;
+}
+html.jdp-ctx-settings .chip.on {
+  outline-color: var(--fg);
+}
+html.jdp-ctx-settings .chip.auto {
+  width: auto;
+  padding: 0 10px !important;
+  font-size: 11.5px;
+  background: var(--jdp-inset) !important;
+  border: 1px solid var(--border) !important;
+}
+html.jdp-ctx-settings .chip.custom {
+  --c: conic-gradient(from 0deg, #e66, #ec6, #6c6, #6ce, #66e, #c6e, #e66);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: var(--fg-subtle);
+  background: var(--c);
+  cursor: pointer;
+  border-radius: 999px;
+}
+.chip.custom input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* Card fonts */
+.fonts {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding-bottom: 12px;
+}
+html.jdp-ctx-settings .font {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 4px 8px !important;
+  background: var(--canvas-inset) !important;
+  border: 1.5px solid transparent !important;
+  border-radius: var(--jdp-radius-sm) !important;
+}
+html.jdp-ctx-settings .font.on {
+  border-color: var(--jdp-accent) !important;
+  background: var(--jdp-accent-soft) !important;
+}
+.font .aa {
+  font-size: 26px;
+  line-height: 1.1;
+}
+.font .name {
+  font-size: 12px;
+  font-weight: 600;
+}
+.font small {
+  font-size: 10px;
+  color: var(--fg-subtle);
+  text-align: center;
+}
+
+.text {
+  width: 160px;
+  padding: 6px 10px;
+  font: inherit;
+  color: var(--fg);
+  background: var(--canvas-inset);
+  border: 1px solid var(--border);
+  border-radius: var(--jdp-radius-sm);
+  outline: none;
+}
+.text:focus {
+  border-color: var(--jdp-accent);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  padding: 14px 0 6px;
+  border-top: 1px solid var(--border-subtle);
+}
+html.jdp-ctx-settings .actions .primary {
+  background: var(--jdp-accent) !important;
+  color: var(--jdp-on-accent) !important;
+  border-color: transparent !important;
+}
+.version {
+  margin: 8px 0 4px;
+  font-size: 11px;
+  color: var(--fg-faint);
+}

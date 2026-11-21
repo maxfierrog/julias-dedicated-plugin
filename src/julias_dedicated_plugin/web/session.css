@@ -1,0 +1,85 @@
+html:not(.jdp-session) #jdp-session,
+html:not(.jdp-session) #jdp-exit {
+  display: none !important;
+}
+#jdp-exit {
+  position: fixed;
+  top: 7px;
+  left: 10px;
+  z-index: 60;
+  padding: 4px 10px;
+  font-family: var(--jdp-font-ui);
+  font-size: 12px;
+  font-weight: 550;
+  color: var(--jdp-faint);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+#jdp-exit:hover {
+  color: var(--jdp-fg);
+  background: var(--jdp-elevated);
+  border-color: var(--jdp-border);
+}
+#jdp-session {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  font-family: var(--jdp-font-ui);
+  pointer-events: none;
+}
+#jdp-session .jdp-progress {
+  height: 3px;
+  background: color-mix(in srgb, var(--jdp-fg) 7%, transparent);
+}
+#jdp-session .jdp-progress i {
+  display: block;
+  height: 100%;
+  background: var(--jdp-accent);
+  border-radius: 0 3px 3px 0;
+  transition: width 0.4s ease;
+}
+#jdp-session .jdp-session-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 11px 18px 0 112px;
+  font-size: 12px;
+  font-weight: 550;
+  color: var(--jdp-faint);
+  font-variant-numeric: tabular-nums;
+}
+#jdp-session .jdp-fatigue {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: fit-content;
+  max-width: min(36rem, 90vw);
+  margin: 10px auto 0;
+  padding: 9px 10px 9px 16px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--jdp-fg);
+  background: var(--jdp-elevated);
+  border: 1px solid var(--jdp-accent-line);
+  border-radius: 999px;
+  box-shadow: var(--jdp-shadow);
+  animation: jdp-fade 0.3s ease-out;
+}
+#jdp-session .jdp-fatigue[hidden] {
+  display: none;
+}
+#jdp-session .jdp-fatigue button {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 999px;
+  background: var(--jdp-inset);
+  color: var(--jdp-subtle);
+  cursor: pointer;
+}

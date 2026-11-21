@@ -1,0 +1,170 @@
+/* Readable cards: applied on top of whatever note type styling her decks
+   ship with. Scoped to html.jdp-cards so the module can be switched off.
+   `!important` is used only where note-type CSS would otherwise win. */
+
+html.jdp-cards.jdp-card-colors body.card {
+  background: var(--jdp-canvas) !important;
+  color: var(--jdp-fg) !important;
+}
+html.jdp-cards body {
+  padding: 0;
+}
+html.jdp-cards #qa {
+  box-sizing: border-box;
+  max-width: var(--jdp-card-width);
+  margin: calc(44px * var(--jdp-space)) auto 96px;
+  padding: 0 28px;
+  font-family: var(--jdp-font-card) !important;
+  font-size: var(--jdp-card-size) !important;
+  line-height: 1.6;
+  text-align: center;
+  overflow-wrap: break-word;
+}
+html.jdp-cards.jdp-card-colors #qa {
+  color: var(--jdp-fg);
+}
+html.jdp-cards.jdp-surface-sheet #qa {
+  background: var(--jdp-elevated);
+  border: 1px solid var(--jdp-border-subtle);
+  border-radius: calc(var(--jdp-radius) + 4px);
+  box-shadow: var(--jdp-shadow);
+  padding: calc(36px * var(--jdp-space)) calc(40px * var(--jdp-space));
+}
+html.jdp-cards #qa.jdp-left {
+  text-align: left;
+}
+html.jdp-cards #qa.jdp-left img,
+html.jdp-cards #qa.jdp-left table {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Clozes */
+html.jdp-cards #qa .cloze {
+  color: var(--jdp-accent) !important;
+  font-weight: 700 !important;
+}
+html.jdp-cards #qa .cloze-inactive {
+  color: inherit !important;
+}
+
+/* The line between question and answer */
+html.jdp-cards #qa hr#answer {
+  border: none;
+  height: 1px;
+  margin: 1.1em -8px;
+  background: var(--jdp-border);
+}
+html.jdp-cards #qa hr:not(#answer) {
+  border: none;
+  height: 1px;
+  background: var(--jdp-border-subtle);
+}
+
+/* Images */
+html.jdp-cards #qa img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--jdp-radius-sm);
+  cursor: zoom-in;
+  vertical-align: middle;
+}
+html.night-mode.jdp-dark-images-dim #qa img {
+  filter: brightness(0.86) contrast(1.05);
+}
+html.night-mode.jdp-dark-images-invert #qa img {
+  filter: invert(0.9) hue-rotate(180deg);
+}
+#jdp-zoom {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(0 0 0 / 0.72);
+  backdrop-filter: blur(6px);
+  cursor: zoom-out;
+  animation: jdp-fade 0.15s ease-out;
+}
+#jdp-zoom img {
+  max-width: 94vw;
+  max-height: 92vh;
+  border-radius: var(--jdp-radius);
+  background: white;
+  box-shadow: 0 12px 48px rgb(0 0 0 / 0.5);
+}
+@keyframes jdp-fade {
+  from { opacity: 0; }
+}
+
+/* Tables */
+html.jdp-cards #qa table {
+  border-collapse: separate !important;
+  border-spacing: 0;
+  margin: 0.8em auto;
+  font-size: 0.78em;
+  line-height: 1.45;
+  font-variant-numeric: tabular-nums;
+  border: 1px solid var(--jdp-border) !important;
+  border-radius: var(--jdp-radius-sm);
+  overflow: hidden;
+  text-align: left;
+}
+html.jdp-cards #qa td,
+html.jdp-cards #qa th {
+  border: none !important;
+  padding: 0.45em 0.85em !important;
+}
+html.jdp-cards #qa tr + tr > td,
+html.jdp-cards #qa tr + tr > th {
+  border-top: 1px solid var(--jdp-border-subtle) !important;
+}
+html.jdp-cards #qa td + td,
+html.jdp-cards #qa th + th,
+html.jdp-cards #qa th + td {
+  border-left: 1px solid var(--jdp-border-subtle) !important;
+}
+html.jdp-cards #qa th,
+html.jdp-cards #qa tr:first-child > td:has(b:only-child) {
+  background: var(--jdp-inset);
+  font-weight: 650;
+}
+
+/* Hint fields ({{hint:...}}) become quiet pill buttons */
+html.jdp-cards #qa a.hint {
+  display: inline-block;
+  margin: 0.5em 0.2em 0;
+  padding: 0.25em 0.9em;
+  border-radius: 999px;
+  font-family: var(--jdp-font-ui);
+  font-size: 0.62em;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--jdp-accent);
+  background: var(--jdp-accent-soft);
+}
+html.jdp-cards #qa div.hint {
+  margin-top: 0.6em;
+  padding: 0.7em 1em;
+  border-radius: var(--jdp-radius-sm);
+  background: var(--jdp-inset);
+  font-size: 0.78em;
+  text-align: left;
+}
+
+/* Type-in-the-answer */
+html.jdp-cards #qa #typeans {
+  box-sizing: border-box;
+  width: 100%;
+  font: inherit;
+  padding: 0.4em 0.7em;
+  border-radius: var(--jdp-radius-sm);
+  border: 1px solid var(--jdp-border);
+  background: var(--jdp-inset);
+  color: var(--jdp-fg);
+  outline: none;
+}
+html.jdp-cards #qa #typeans:focus {
+  border-color: var(--jdp-accent);
+}

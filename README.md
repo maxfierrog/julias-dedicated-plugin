@@ -88,6 +88,7 @@ Rules this imposes on the code:
 | `uv run seed` | Rebuild the dev collection: original MCAT-style notes (an AnKing-like cloze note type plus stock Basic/Cloze; images, tables, MathJax) with ~4 months of simulated review history, a backlog due today, and leeches. Deterministic; `--days`, `--seed`. Quit the dev Anki first. |
 | `uv run install-addon <code>...` | Install AnkiWeb add-ons (by their numeric code) into the dev profile, as Anki's Get Add-ons does. Restart the dev Anki afterwards. |
 | `uv run screenshot [out.png]` / `uv run anki-js "<expr>"` | Screenshot, or evaluate JS in, a running dev Anki web view (default: the main one) over DevTools. |
+| `uv run anki-goto home\|deck\|review\|answer [--shot out.png]` | Navigate the running dev Anki (optionally screenshotting the whole window). |
 | `uv run simulate` | Add simulated history to whatever is in the dev collection, e.g. a real deck imported via File → Import. Only works on a collection with no reviews yet. |
 
 Set `ANKI_BIN` if Anki is not at `/Applications/Anki.app`. Add-on logs land in
