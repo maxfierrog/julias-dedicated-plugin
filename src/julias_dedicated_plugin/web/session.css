@@ -10,14 +10,22 @@
   pointer-events: none;
   font-family: var(--jdp-font-ui);
 }
+/* Three columns: the progress sits in the exact center (over the card) and
+   the exit hugs it from the left, so it never pushes the bar off-center. */
 .jdp-session-inner {
   box-sizing: border-box;
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  width: min(calc(var(--jdp-card-width) + 4rem), 100%);
-  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr minmax(0, min(32rem, 60vw)) 1fr;
+  align-items: start;
+  column-gap: 14px;
   padding: 16px 20px 0;
+}
+.jdp-session-inner > .jdp-exit {
+  grid-column: 1;
+  justify-self: end;
+}
+.jdp-session-inner > .jdp-progress {
+  grid-column: 2;
 }
 #jdp-session button {
   pointer-events: auto;
@@ -40,7 +48,6 @@
   color: var(--jdp-accent);
 }
 .jdp-progress {
-  flex: 1;
   min-width: 0;
   padding-top: 9px;
 }

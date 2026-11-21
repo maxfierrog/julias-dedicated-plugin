@@ -136,7 +136,7 @@ html.jdp-ctx-reviewer-bottom body {
 }
 /* Edit / More sit beside the answer buttons, not in the far corners. */
 html.jdp-ctx-reviewer-bottom #innertable {
-  width: min(calc(var(--jdp-card-width) + 4rem), 100%) !important;
+  width: 100% !important;
   margin: 0 auto;
 }
 /* Always truly centered: the answer buttons (or Show Answer) sit in the
@@ -147,7 +147,9 @@ html.jdp-ctx-reviewer-bottom #innertable > tbody {
 }
 html.jdp-ctx-reviewer-bottom #innertable > tbody > tr {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  /* minmax(0, 1fr): side columns stay equal even when Edit and More
+     differ in width, so the middle never drifts. */
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   column-gap: 10px;
 }
