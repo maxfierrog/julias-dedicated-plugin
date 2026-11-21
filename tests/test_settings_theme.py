@@ -34,6 +34,11 @@ def test_settings_roundtrip_in_collection(tmp_path):
         again = settings.Settings(col).get()
         assert again["cards"]["size"] == 26
         assert again["modules"]["fatigue"] is True
+        # Only her changes are stored, so new defaults still reach her.
+        assert col.get_config(settings.CONFIG_KEY) == {
+            "cards": {"size": 26},
+            "modules": {"fatigue": True},
+        }
         assert store.reset() == settings.DEFAULTS
     finally:
         col.close()

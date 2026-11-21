@@ -81,6 +81,24 @@ def set_path(data: dict, path: str, value: Any) -> dict:
     return out
 
 
+def diff(data: dict, defaults: dict = DEFAULTS) -> dict:
+    """Only the values that differ from the defaults. Storing just these means
+    improved defaults in future updates still reach her for everything she
+    hasn't customized."""
+    out = {}
+    for key, default in defaults.items():
+        if key not in data:
+            continue
+        value = data[key]
+        if isinstance(default, dict):
+            sub = diff(value, default)
+            if sub:
+                out[key] = sub
+        elif value != default:
+            out[key] = value
+    return out
+
+
 class Settings:
     """Read/write settings on an open collection."""
 
@@ -92,9 +110,9 @@ class Settings:
 
     def set(self, path: str, value: Any) -> dict:
         updated = merged(set_path(self.get(), path, value))
-        self.col.set_config(CONFIG_KEY, updated)
+        self.col.set_config(CONFIG_KEY, diff(updated))
         return updated
 
     def reset(self) -> dict:
-        self.col.set_config(CONFIG_KEY, copy.deepcopy(DEFAULTS))
+        self.col.set_config(CONFIG_KEY, {})
         return self.get()
