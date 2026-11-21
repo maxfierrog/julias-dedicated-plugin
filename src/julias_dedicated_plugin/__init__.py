@@ -211,6 +211,9 @@ def _on_js_message(handled, message: str, context):
             from .settings_dialog import open_settings
 
             open_settings()
+        elif cmd == "home-refresh":
+            if mw.state == "deckBrowser":
+                mw.deckBrowser.refresh()
         elif cmd in ("goal", "event-add", "event-del"):
             _home_command(cmd, arg)
         elif cmd in ("set", "reset", "feedback"):

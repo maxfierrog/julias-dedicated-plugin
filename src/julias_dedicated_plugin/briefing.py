@@ -552,6 +552,15 @@ WIDGETS = {
 }
 
 
+# What each size means, shown while resizing in edit mode.
+SIZE_LABELS = {
+    "forecast": {(2, 1): "7 days", (3, 1): "14 days"},
+    "heatmap": {(2, 1): "6 months", (3, 1): "8 months"},
+    "weak_spots": {(2, 1): "Top 3", (2, 2): "Top 8"},
+    "finish_line": {(2, 1): "3 decks", (2, 2): "8 decks"},
+}
+
+
 def parse_entry(entry: str) -> tuple[str, tuple[int, int]] | None:
     """'forecast' or 'forecast:3x1' -> (id, size); None if unknown/invalid.
     Sizes not allowed for the widget fall back to its default."""
@@ -581,10 +590,14 @@ def _widget(wid: str, size: tuple[int, int], col, settings) -> str:
             "<div class='jdp-sub'>Couldn't load this widget.</div>",
         )
     allowed = ",".join(f"{c}x{r}" for c, r in sizes)
+    labels = ";".join(
+        f"{c}x{r}={label}" for (c, r), label in SIZE_LABELS.get(wid, {}).items()
+    )
     return (
         f"<div class='jdp-widget jdp-cols-{cols} jdp-rows-{rows}' data-id='{wid}' "
         f"data-name='{html.escape(name)}' data-desc='{html.escape(desc)}' "
-        f"data-size='{cols}x{rows}' data-sizes='{allowed}' data-cols='{cols}'>"
+        f"data-size='{cols}x{rows}' data-sizes='{allowed}' "
+        f"data-labels='{html.escape(labels)}' data-cols='{cols}'>"
         f"{inner}</div>"
     )
 

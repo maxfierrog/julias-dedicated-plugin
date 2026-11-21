@@ -30,7 +30,7 @@
     try {
       sessionStorage.setItem("jdp-editing", "1");
     } catch (e) {}
-    pycmd("decks");
+    pycmd("jdp:home-refresh");
   }
 
   // ---- Resize: drag the corner handle; snaps to the widget's sizes ------
@@ -50,32 +50,66 @@
     w.dataset.size = size;
   }
 
-  function startResize(e, w) {
+  function sizeLabels(w) {
+    const out = {};
+    (w.dataset.labels || "").split(";").filter(Boolean).forEach((pair) => {
+      const [size, label] = pair.split("=");
+      out[size] = label;
+    });
+    return out;
+  }
+
+  // Which directions this widget can be resized in.
+  function axes(w) {
+    const sizes = w.dataset.sizes.split(",").map((x) => x.split("x").map(Number));
+    return {
+      h: new Set(sizes.map((s) => s[0])).size > 1,
+      v: new Set(sizes.map((s) => s[1])).size > 1,
+    };
+  }
+
+  function startResize(e, w, axis) {
     e.preventDefault();
     e.stopPropagation();
-    const sizes = w.dataset.sizes.split(",");
     const start = w.dataset.size;
+    const [c0, r0] = start.split("x").map(Number);
+    const sizes = w.dataset.sizes
+      .split(",")
+      .filter((s) => (axis === "h" ? Number(s.split("x")[1]) === r0 : Number(s.split("x")[0]) === c0));
+    const labels = sizeLabels(w);
     const rect = w.getBoundingClientRect();
     const { colW, gap } = slot();
-    const rowH = rect.height / Number(start.split("x")[1]);
+    const rowH = (rect.height - gap * (r0 - 1)) / r0;
     w.draggable = false;
     w.classList.add("jdp-resizing");
+    const badge = document.createElement("span");
+    badge.className = "jdp-w-badge";
+    badge.textContent = labels[start] || start.replace("x", " × ");
+    w.appendChild(badge);
+    document.documentElement.style.cursor = axis === "h" ? "ew-resize" : "ns-resize";
+
     const move = (ev) => {
-      const wantC = (rect.width + ev.clientX - e.clientX + gap) / (colW + gap);
-      const wantR = (rect.height + ev.clientY - e.clientY + gap) / (rowH + gap);
       let best = start;
       let bestD = Infinity;
       for (const s of sizes) {
         const [c, r] = s.split("x").map(Number);
-        const d = Math.abs(c - wantC) + Math.abs(r - wantR);
+        const d =
+          axis === "h"
+            ? Math.abs(rect.width + (ev.clientX - e.clientX) - (c * colW + (c - 1) * gap))
+            : Math.abs(rect.height + (ev.clientY - e.clientY) - (r * rowH + (r - 1) * gap));
         if (d < bestD) [best, bestD] = [s, d];
       }
-      if (best !== w.dataset.size) setSize(w, best);
+      if (best !== w.dataset.size) {
+        setSize(w, best);
+        badge.textContent = labels[best] || best.replace("x", " × ");
+      }
     };
     const up = () => {
       document.removeEventListener("pointermove", move);
       document.removeEventListener("pointerup", up);
+      document.documentElement.style.cursor = "";
       w.classList.remove("jdp-resizing");
+      badge.remove();
       w.draggable = true;
       if (w.dataset.size !== start) {
         save();
@@ -105,11 +139,13 @@
       });
       w.appendChild(x);
     }
-    if (w.dataset.sizes.includes(",") && !$(".jdp-w-resize", w)) {
+    const can = axes(w);
+    for (const axis of ["h", "v"]) {
+      if (!can[axis] || $(`.jdp-w-handle.jdp-${axis}`, w)) continue;
       const h = document.createElement("span");
-      h.className = "jdp-w-resize";
-      h.title = "Drag to resize";
-      h.addEventListener("pointerdown", (e) => startResize(e, w));
+      h.className = `jdp-w-handle jdp-${axis}`;
+      h.title = axis === "h" ? "Drag to make wider or narrower" : "Drag to make taller or shorter";
+      h.addEventListener("pointerdown", (e) => startResize(e, w, axis));
       w.appendChild(h);
     }
   }
@@ -117,7 +153,7 @@
   function undecorate(w) {
     w.draggable = false;
     $(".jdp-w-remove", w)?.remove();
-    $(".jdp-w-resize", w)?.remove();
+    $$(".jdp-w-handle", w).forEach((h) => h.remove());
   }
 
   function renderPicker() {
@@ -170,7 +206,7 @@
       try {
         sessionStorage.removeItem("jdp-editing");
       } catch (e) {}
-      pycmd("decks"); // re-render with fresh data for newly added widgets
+      pycmd("jdp:home-refresh"); // re-render with fresh data for newly added widgets
     }
   }
 

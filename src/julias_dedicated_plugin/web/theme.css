@@ -903,26 +903,74 @@ html.jdp-editing .jdp-grid > .jdp-widget > .jdp-tile {
   outline: 2px dashed color-mix(in srgb, var(--jdp-accent) 45%, transparent);
   outline-offset: 3px;
 }
-.jdp-w-resize {
+/* Resize grips on the edges that can actually move: right edge = wider or
+   narrower, bottom edge = taller or shorter. Shown on hover in edit mode. */
+.jdp-w-handle {
   position: absolute;
-  right: -6px;
-  bottom: -6px;
-  z-index: 2;
-  width: 22px;
-  height: 22px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: var(--jdp-elevated);
+  border: 2px solid var(--jdp-accent);
   border-radius: var(--jdp-radius-pill);
-  background: var(--jdp-accent);
-  border: 3px solid var(--jdp-canvas);
-  cursor: nwse-resize;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.12);
+  opacity: 0;
+  transition: opacity 0.15s;
   touch-action: none;
 }
-.jdp-w-resize::after {
+.jdp-w-handle::before,
+.jdp-w-handle::after {
   content: "";
-  position: absolute;
-  inset: 5px;
-  border-right: 2px solid var(--jdp-on-accent);
-  border-bottom: 2px solid var(--jdp-on-accent);
   border-radius: 1px;
+  background: var(--jdp-accent);
+}
+.jdp-w-handle.jdp-h {
+  top: 50%;
+  right: -8px;
+  width: 14px;
+  height: 46px;
+  margin-top: -23px;
+  cursor: ew-resize;
+}
+.jdp-w-handle.jdp-h::before,
+.jdp-w-handle.jdp-h::after {
+  width: 2px;
+  height: 16px;
+}
+.jdp-w-handle.jdp-v {
+  left: 50%;
+  bottom: -8px;
+  width: 46px;
+  height: 14px;
+  margin-left: -23px;
+  flex-direction: column;
+  cursor: ns-resize;
+}
+.jdp-w-handle.jdp-v::before,
+.jdp-w-handle.jdp-v::after {
+  width: 16px;
+  height: 2px;
+}
+html.jdp-editing .jdp-widget:hover .jdp-w-handle,
+.jdp-widget.jdp-resizing .jdp-w-handle {
+  opacity: 1;
+}
+.jdp-w-badge {
+  position: absolute;
+  z-index: 4;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 6px 14px;
+  border-radius: var(--jdp-radius-pill);
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--jdp-on-accent);
+  background: var(--jdp-accent);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.18);
+  pointer-events: none;
 }
 html.jdp-editing .jdp-grid > .jdp-widget.jdp-resizing > .jdp-tile {
   outline-style: solid;
@@ -1296,4 +1344,19 @@ html.jdp .jdp-tl-del:hover {
   width: 44px;
   height: 44px;
   color: var(--jdp-review);
+}
+
+/* Scrolling content fades out under the top toolbar instead of being cut
+   along the edge of its (full-width) strip. */
+html.jdp-ctx-deckbrowser body::before,
+html.jdp-ctx-overview body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 28px;
+  z-index: 100;
+  pointer-events: none;
+  background: linear-gradient(var(--jdp-canvas), transparent);
 }

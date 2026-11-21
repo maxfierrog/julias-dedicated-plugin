@@ -9,6 +9,24 @@
   z-index: 50;
   pointer-events: none;
   font-family: var(--jdp-font-ui);
+  /* A long card scrolls under the header: give it a soft backdrop. */
+  padding-bottom: 18px;
+  background: linear-gradient(
+    var(--jdp-canvas) calc(100% - 18px),
+    transparent
+  );
+}
+/* ...and fade out above the answer buttons instead of a hard cut. */
+html.jdp-session body::after {
+  content: "";
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 24px;
+  z-index: 40;
+  pointer-events: none;
+  background: linear-gradient(transparent, var(--jdp-canvas));
 }
 /* Three columns: the progress sits in the exact center (over the card) and
    the exit hugs it from the left, so it never pushes the bar off-center. */
