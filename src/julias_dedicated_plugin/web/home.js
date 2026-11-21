@@ -189,6 +189,7 @@
   }
 
   function setEditing(on) {
+    if (!on) endDrag(false);
     editing = on;
     document.documentElement.classList.toggle("jdp-editing", on);
     const btn = $(".jdp-edit-toggle");
@@ -207,24 +208,105 @@
   }
 
   // ---- Drag to reorder ---------------------------------------------------
-  // Pointer events (Anki's web views reject HTML5 drag-and-drop): a floating
-  // copy follows the pointer, the widget's own slot stays as a placeholder,
-  // and the others slide out of the way (FLIP animation).
+  // Pointer events (Anki's web views reject HTML5 drag-and-drop).
+  //
+  // The grid packs densely (small widgets backfill gaps), so DOM order and
+  // visual order differ, and hit-testing the widget under the pointer gives
+  // unpredictable jumps (and oscillates while neighbours animate). Instead
+  // we simulate the grid's packing for every possible insertion index and
+  // pick the one that lands the dragged widget closest to the pointer.
   const DRAG_THRESHOLD = 6;
-  let pending = null; // { w, x, y } before the threshold is passed
-  let drag = null; // { w, ghost, dx, dy }
+  const HYSTERESIS = 0.35; // in grid cells: must be clearly better to move
+  let pending = null; // { w, x, y, id } before the threshold is passed
+  let drag = null; // { w, ghost, dx, dy, startOrder, x, y, raf }
 
+  function gridColumns() {
+    return getComputedStyle(grid()).gridTemplateColumns.split(" ").length;
+  }
+
+  function spanOf(w) {
+    const n = gridColumns();
+    const [c, r] = w.dataset.size.split("x").map(Number);
+    return [Math.min(c, n), r];
+  }
+
+  // CSS grid "dense" auto-placement: each item takes the first free spot,
+  // scanning from the top-left. Returns {el: [col, row, cols, rows]}.
+  function pack(items, ncols) {
+    const used = new Set();
+    const free = (c, r, w, h) => {
+      for (let y = r; y < r + h; y++)
+        for (let x = c; x < c + w; x++) if (used.has(x + "," + y)) return false;
+      return true;
+    };
+    const out = new Map();
+    for (const el of items) {
+      const [w, h] = spanOf(el);
+      for (let r = 0; ; r++) {
+        let placed = false;
+        for (let c = 0; c + w <= ncols; c++) {
+          if (free(c, r, w, h)) {
+            for (let y = r; y < r + h; y++)
+              for (let x = c; x < c + w; x++) used.add(x + "," + y);
+            out.set(el, [c, r, w, h]);
+            placed = true;
+            break;
+          }
+        }
+        if (placed) break;
+      }
+    }
+    return out;
+  }
+
+  function pointerCell(x, y) {
+    const g = grid();
+    const r = g.getBoundingClientRect();
+    const cs = getComputedStyle(g);
+    const gap = parseFloat(cs.columnGap) || 0;
+    const rowGap = parseFloat(cs.rowGap) || 0;
+    const ncols = gridColumns();
+    const colW = (r.width - gap * (ncols - 1)) / ncols;
+    const rowH = parseFloat(cs.gridAutoRows) || 192;
+    return [(x - r.left) / (colW + gap), (y - r.top) / (rowH + rowGap)];
+  }
+
+  function bestIndex(x, y) {
+    const others = $$(".jdp-grid > .jdp-widget").filter((el) => el !== drag.w);
+    const ncols = gridColumns();
+    const [px, py] = pointerCell(x, y);
+    // Aim for where the grabbed point of the widget should be, so the widget
+    // follows the hand rather than its top-left corner.
+    const [gw, gh] = spanOf(drag.w);
+    const ax = px - (drag.dx / drag.ghost.offsetWidth) * gw;
+    const ay = py - (drag.dy / drag.ghost.offsetHeight) * gh;
+    const current = $$(".jdp-grid > .jdp-widget").indexOf(drag.w);
+    let best = current;
+    let bestD = Infinity;
+    let currentD = Infinity;
+    for (let i = 0; i <= others.length; i++) {
+      const order = [...others.slice(0, i), drag.w, ...others.slice(i)];
+      const [c, r] = pack(order, ncols).get(drag.w);
+      const d = Math.hypot(c - ax, r - ay);
+      if (i === current) currentD = d;
+      if (d < bestD) [best, bestD] = [i, d];
+    }
+    return bestD < currentD - HYSTERESIS ? best : current;
+  }
+
+  // Slide widgets from where they appear now to their new spots.
   function flip(mutate) {
     const items = $$(".jdp-grid > .jdp-widget");
     const before = new Map(items.map((el) => [el, el.getBoundingClientRect()]));
+    items.forEach((el) => el.getAnimations().forEach((a) => a.cancel()));
     mutate();
     for (const el of items) {
-      if (drag && el === drag.w) continue;
+      if (el === drag?.w) continue;
       const a = before.get(el);
       const b = el.getBoundingClientRect();
       const dx = a.left - b.left;
       const dy = a.top - b.top;
-      if (!dx && !dy) continue;
+      if (Math.abs(dx) < 1 && Math.abs(dy) < 1) continue;
       el.animate(
         [{ transform: `translate(${dx}px, ${dy}px)` }, { transform: "none" }],
         { duration: 180, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" },
@@ -233,15 +315,16 @@
   }
 
   function onPointerDown(e) {
-    if (!editing || e.button !== 0) return;
+    if (!editing || e.button !== 0 || !e.isPrimary || drag) return;
     if (e.target.closest(".jdp-w-handle, .jdp-w-remove, button, input, select")) return;
     const w = e.target.closest(".jdp-grid > .jdp-widget");
     if (!w) return;
-    pending = { w, x: e.clientX, y: e.clientY };
+    e.preventDefault(); // no text selection while pressing and moving
+    pending = { w, x: e.clientX, y: e.clientY, id: e.pointerId };
   }
 
   function startDrag(e) {
-    const { w } = pending;
+    const { w, id } = pending;
     pending = null;
     const r = w.getBoundingClientRect();
     const ghost = w.cloneNode(true);
@@ -256,37 +339,77 @@
     document.body.appendChild(ghost);
     w.classList.add("jdp-placeholder");
     document.documentElement.classList.add("jdp-reordering");
-    drag = { w, ghost, dx: e.clientX - r.left, dy: e.clientY - r.top };
+    try {
+      w.setPointerCapture(id); // keep receiving events outside the window
+    } catch (err) {}
+    drag = {
+      w,
+      ghost,
+      dx: e.clientX - r.left,
+      dy: e.clientY - r.top,
+      startOrder: $$(".jdp-grid > .jdp-widget"),
+      x: e.clientX,
+      y: e.clientY,
+      raf: requestAnimationFrame(autoScroll),
+    };
+  }
+
+  // Near the top or bottom edge, scroll so off-screen spots are reachable.
+  function autoScroll() {
+    if (!drag) return;
+    const edge = 70;
+    const v =
+      drag.y < edge ? -(edge - drag.y) / 4 : drag.y > innerHeight - edge ? (drag.y - (innerHeight - edge)) / 4 : 0;
+    if (v) {
+      window.scrollBy(0, v);
+      reposition();
+    }
+    drag.raf = requestAnimationFrame(autoScroll);
+  }
+
+  function reposition() {
+    const idx = bestIndex(drag.x, drag.y);
+    const items = $$(".jdp-grid > .jdp-widget");
+    const current = items.indexOf(drag.w);
+    if (idx === current) return;
+    const others = items.filter((el) => el !== drag.w);
+    flip(() => grid().insertBefore(drag.w, others[idx] || null));
   }
 
   function onPointerMove(e) {
-    if (pending) {
-      const moved = Math.hypot(e.clientX - pending.x, e.clientY - pending.y);
-      if (moved < DRAG_THRESHOLD) return;
+    if (pending && e.pointerId === pending.id) {
+      if (!(e.buttons & 1)) {
+        pending = null; // button was released somewhere we didn't see
+        return;
+      }
+      if (Math.hypot(e.clientX - pending.x, e.clientY - pending.y) < DRAG_THRESHOLD) return;
       startDrag(e);
     }
     if (!drag) return;
+    if (!(e.buttons & 1)) return endDrag(false);
     e.preventDefault();
+    drag.x = e.clientX;
+    drag.y = e.clientY;
     drag.ghost.style.left = e.clientX - drag.dx + "px";
     drag.ghost.style.top = e.clientY - drag.dy + "px";
-    // Which widget is under the pointer (ignoring the ghost)?
-    const under = document.elementFromPoint(e.clientX, e.clientY);
-    const target = under?.closest(".jdp-grid > .jdp-widget");
-    if (!target || target === drag.w) return;
-    const r = target.getBoundingClientRect();
-    const after =
-      e.clientY > r.bottom - r.height / 4 ||
-      (e.clientX > r.left + r.width / 2 && e.clientY > r.top + r.height / 4);
-    const ref = after ? target.nextElementSibling : target;
-    if (ref === drag.w || (after && target.nextElementSibling === drag.w)) return;
-    flip(() => grid().insertBefore(drag.w, ref));
+    reposition();
   }
 
-  function onPointerUp() {
+  function endDrag(cancel) {
     pending = null;
     if (!drag) return;
-    const { w, ghost } = drag;
+    const { w, ghost, startOrder, raf } = drag;
+    cancelAnimationFrame(raf);
+    if (cancel) {
+      flip(() => startOrder.forEach((el) => grid().appendChild(el)));
+    }
+    drag = null;
+    document.documentElement.classList.remove("jdp-reordering");
     const to = w.getBoundingClientRect();
+    const done = () => {
+      ghost.remove();
+      w.classList.remove("jdp-placeholder");
+    };
     ghost
       .animate(
         [
@@ -295,13 +418,9 @@
         ],
         { duration: 160, easing: "ease-out" },
       )
-      .finished.finally(() => {
-        ghost.remove();
-        w.classList.remove("jdp-placeholder");
-      });
-    document.documentElement.classList.remove("jdp-reordering");
-    drag = null;
-    save();
+      .finished.then(done, done);
+    const now = $$(".jdp-grid > .jdp-widget");
+    if (!cancel && now.some((el, i) => el !== startOrder[i])) save();
   }
 
   // ---- Timeline form ---------------------------------------------------
@@ -349,6 +468,9 @@
     });
   }
 
+  // For automated checks: the packing simulation must match the real grid.
+  window.jdpHome = { pack, gridColumns };
+
   function init() {
     if (!grid()) return;
     tidyTimeline();
@@ -359,9 +481,13 @@
     document.addEventListener("submit", onSubmit);
     document.addEventListener("pointerdown", onPointerDown);
     document.addEventListener("pointermove", onPointerMove);
-    document.addEventListener("pointerup", onPointerUp);
+    document.addEventListener("pointerup", () => endDrag(false));
+    document.addEventListener("pointercancel", () => endDrag(true));
+    window.addEventListener("blur", () => endDrag(false));
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && editing) setEditing(false);
+      if (e.key !== "Escape") return;
+      if (drag || pending) endDrag(true); // Esc cancels a drag in progress
+      else if (editing) setEditing(false);
     });
     let resume = false;
     try {
